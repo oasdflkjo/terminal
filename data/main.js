@@ -26,7 +26,7 @@ command.innerHTML = textarea.value;
 function enterKey(e) {
   if (e.keyCode == 13) {
     commands.push(command.innerHTML);
-    addLine("visitor@mainframe:~$ " + command.innerHTML, "no-animation", 0);
+    addLine("visitor@petripihla.com:~$ " + command.innerHTML, "no-animation", 0);
     commander(command.innerHTML);
     command.innerHTML = "";
     textarea.value = "";

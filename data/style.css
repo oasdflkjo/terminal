@@ -72,7 +72,7 @@ b {
 
 #liner::before {
   color: #c88a76;
-  content: "visitor@mainframe:~$";
+  content: "visitor@petripihla.com:~$";
 }
 
 @keyframes show {
