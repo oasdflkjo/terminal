@@ -6,7 +6,7 @@ whois = [
   "<br>",
   "Hi reader 👋",
   "<br>",
-  "I am a dedicated Software Engineer with a primary focus on embedded systems and C programming.My experience at Danfoss has strengthened my skills in working with STM32 ARM M3 and M4 microcontrollers and honed my problem-solving skills. Furthermore, my background in electrical engineering allows me to leverage PADS for viewing schematics effectively.",
+  "As a dedicated Software Engineer, I specialize in embedded systems and C programming. My experience at Danfoss has allowed me to hone my problem-solving skills and strengthen my proficiency with STM32 ARM M3 and M4 microcontrollers. In addition, my interest in PCB design has enhanced my ability to effectively view and understand schematics using PADS.",
   "<br>",
   "A firm believer in collaboration, I am passionate about contributing to team projects and maintaining open lines of communication. Whether I'm working to understand multiple layers of a complex problem or consulting with team members to devise a solution, I put great emphasis on understanding the nuances and interacting with colleagues.",
   "<br>",
