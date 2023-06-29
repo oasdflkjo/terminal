@@ -7,6 +7,7 @@ var command = document.getElementById("typer");
 var textarea = document.getElementById("texter");
 var terminal = document.getElementById("terminal");
 var LINE_SPEED = 80;
+var LINE_LENGTH = 100;
 var commands = [];
 
 setTimeout(function () {
@@ -15,7 +16,10 @@ setTimeout(function () {
 }, 0);
 
 window.addEventListener("click", function (event) {
-  textarea.focus();
+  var selection = window.getSelection().toString();
+  if (!selection) {
+    textarea.focus();
+  }
 });
 
 window.addEventListener("keyup", enterKey);
@@ -31,6 +35,39 @@ function enterKey(e) {
     command.innerHTML = "";
     textarea.value = "";
   }
+}
+
+function insertNewlines(str) {
+  var width = LINE_LENGTH; // Choose the number that fits your design
+  var space = ' ';
+  if (str.length > width) {
+    var p = width;
+    for (; p > 0 && str[p] != ' '; p--) {
+    }
+    if (p > 0) {
+      var left = str.substring(0, p);
+      var right = str.substring(p + 1);
+      return left + '<br />' + insertNewlines(right);
+    }
+  }
+  return str;
+}
+
+function wrapText(text, width) {
+  var words = text.split(' ');
+  var lines = [];
+  var line = '';
+
+  for (var i = 0; i < words.length; i++) {
+    if (line.length + words[i].length > width) {
+      lines.push(line);
+      line = '';
+    }
+    line += words[i] + ' ';
+  }
+  lines.push(line);  // Push the last line to the lines array
+
+  return lines.join('<br />');
 }
 
 function commander(cmd) {
@@ -73,6 +110,8 @@ function openNewTab(link) {
 
 function addLine(text, style, time) {
   var t = "";
+  text = wrapText(text, 80); // call the function to insert newlines
+
   for (let i = 0; i < text.length; i++) {
     if (text.charAt(i) == " " && text.charAt(i + 1) == " ") {
       t += "&nbsp;&nbsp;";
@@ -81,14 +120,15 @@ function addLine(text, style, time) {
       t += text.charAt(i);
     }
   }
+
   setTimeout(function () {
     var next = document.createElement("p");
     next.innerHTML = t;
-    next.className = style;
+    next.className = style + " word-wrap";
 
     before.parentNode.insertBefore(next, before);
 
-    window.scrollTo(0, document.body.offsetHeight);
+    window.scrollTo(0, document.body.scrollHeight);
   }, time);
 }
 

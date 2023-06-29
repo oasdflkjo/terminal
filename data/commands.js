@@ -6,20 +6,18 @@ whois = [
   "<br>",
   "Hi reader 👋",
   "<br>",
-  "As an experienced software engineer, I've focused on embedded systems and C programming at Danfoss. My work with STM32 ARM M3 and M4 microcontrollers and electrical engineering schematics using PADS has deepened my expertise.",
+  "I am a dedicated Software Engineer with a primary focus on embedded systems and C programming.My experience at Danfoss has strengthened my skills in working with STM32 ARM M3 and M4 microcontrollers and honed my problem-solving skills. Furthermore, my background in electrical engineering allows me to leverage PADS for viewing schematics effectively.",
   "<br>",
-  "Passionate about problem-solving, I embrace complex challenges, investigating all aspects before developing and refining a solution. Teamwork and open communication form the core of my approach, especially in a multinational context.",
+  "A firm believer in collaboration, I am passionate about contributing to team projects and maintaining open lines of communication. Whether I'm working to understand multiple layers of a complex problem or consulting with team members to devise a solution, I put great emphasis on understanding the nuances and interacting with colleagues.",
   "<br>",
-  "My commitment to continuous learning drives my mastery of C, Python, and CMake. Intrigued by project architecture and continuous integration and deployment (CICD), I also see significant potential for AI models like GPT in improving codebase comprehension.",
+  "My commitment to continuous learning pushes me to constantly expand my technical capabilities. At present, I am working on mastering C, Python, and CMake with an interest in delving deeper into project architecture and continuous integration and deployment (CICD). Moreover, I see great potential in AI models like GPT to streamline codebase comprehension and I am eagerly exploring its applications.",
   "<br>",
-  "I'm adept at maintaining balance in high-pressure situations, adhering to the principle that work is done when it's done, without succumbing to unnecessary stress.",
+  "When it comes to handling pressure, I adhere to the principle of balanced productivity, firmly maintaining that work is done when it's done, thereby ensuring I remain focused and effective in my role.",
   "<br>",
-  "Mentoring is rewarding for me, I take pleasure in sparking curiosity in others and equipping them with the knowledge and tools to navigate their own paths in the tech world.",
+  "As a mentor, I derive immense satisfaction in sparking curiosity in others. I strive to equip my colleagues with the tools they need to succeed, believing in empowering them to navigate their own technical journey.",
   "<br>",
-  "For aspiring software engineers, I champion hands-on experience: embarking on your projects, no matter their scale, offers invaluable learning and growth.",
+  "Looking ahead, I aim to leverage emerging technologies such as GPT to further optimize the engineering experience. I am excited about the prospect of contributing my skills and learning from others",
   "<br>",
-  "Looking to the future, I aim to further enhance my contributions to the field, continually expand my knowledge, and leverage advanced technologies such as GPT to enrich the engineering experience.",
-  "<br>"
 ];
 
 email = [
@@ -31,7 +29,7 @@ email = [
 help = [
   "<br>",
   '<span class="command">whois</span>          Who is Petri Pihla?',
-  '<span class="command">email</span>          No spam please :^)',
+  '<span class="command">email</span>          No spam please :)',
   '<span class="command">github</span>         Open github',
   '<span class="command">linkedin</span>       Open linkedin',
   '<span class="command">clear</span>          Clear terminal',
@@ -48,5 +46,5 @@ banner = [
   "██      ██         ██    ██   ██ ██     ██      ██ ██   ██ ██      ██   ██ ",
   "██      ███████    ██    ██   ██ ██     ██      ██ ██   ██ ███████ ██   ██ ",
   "                                                                           ",
-  "<span class=\"color2\">To get started please type</span> <span class=\"command\">help</span><span class=\"color2\"></span>",
+  "<span class=\"color2\">To get started please type help</span>",
 ];

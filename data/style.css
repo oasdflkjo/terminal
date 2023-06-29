@@ -1,3 +1,10 @@
+.line-limited {
+  max-width: 1000px;
+  /* Set this to the maximum width you want */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
 body {
   margin: 0;
   padding: 15px 20px;
