@@ -1,90 +1,39 @@
-# 🖥️ CRT Terminal Emulator
+# Terminal Website
 
-A retro-style terminal emulator that recreates the look and feel of classic CRT displays using modern web technologies.
+A retro-style terminal website that simulates a CRT display effect.
 
-## 🌟 Features
+## How it Works
 
-- Authentic CRT visual effects including:
-  - Scanlines
-  - Screen curvature
-  - Phosphor glow
-  - Screen glare
-  - Subtle noise and distortion
-- Responsive design that maintains correct aspect ratio
-- DPI-aware rendering for consistent display across devices
-- Monospace font rendering with proper character alignment
-- Animated text input with matrix-style effect
-- Command history navigation
-- Basic terminal commands (help, clear, echo, whois)
+The terminal operates in three main steps:
 
-## 🏗️ Architecture
+1. **Virtual Terminal Buffer**
+   - Maintains a 2D character array (80x24 characters)
+   - Handles cursor position and text input
+   - Manages command processing
 
-The project is built using a modular architecture with clear separation of concerns:
+2. **HTML Rendering**
+   - The character buffer is rendered to HTML
+   - Uses monospace font (JetBrains Mono) for consistent character width
+   - Handles text input and cursor blinking
 
-### Core Components
+3. **CRT Effect**
+   - HTML content is captured using html2canvas
+   - WebGL shaders apply CRT effects:
+     - Screen curvature
+     - Scanlines
+     - Green phosphor glow
 
-1. **VirtualTerminal.js**
-   - Manages the terminal's internal state
-   - Handles the character buffer and cursor
-   - Controls text animation and scrolling
-   - Maintains command history
+## Project Structure
 
-2. **TerminalRenderer.js**
-   - Handles DPI-aware rendering
-   - Manages character dimensions and scaling
-   - Controls the virtual canvas for text rendering
-   - Ensures consistent display across devices
+- `index.html` - Main entry point and terminal container
+- `data/main.js` - Terminal buffer and input handling
+- `data/commands.js` - Command definitions and banner
+- `data/crt-effect.js` - WebGL shader implementation
+- `data/cursor.js` - Cursor animation
+- `data/style.css` - Basic styling
 
-3. **TerminalController.js**
-   - Processes user input
-   - Manages command execution
-   - Handles keyboard events
-   - Controls command history navigation
+## Usage
 
-4. **CRTEffect.js**
-   - Implements WebGL-based CRT effects
-   - Manages screen distortion and scanlines
-   - Controls phosphor glow and screen glare
-   - Handles real-time animation effects
+Just open `index.html` in a modern browser. Type 'help' to see available commands.
 
-## 🎨 Rendering Pipeline
-
-1. **Text Buffer**
-   - Characters are stored in a 2D buffer
-   - Each cell contains character, color, and style information
-   - Supports 80x28 character grid
-
-2. **Canvas Rendering**
-   - Text is rendered to a virtual canvas
-   - DPI scaling is applied for crisp text
-   - Monospace font ensures proper alignment
-
-3. **WebGL Post-Processing**
-   - Canvas texture is processed with WebGL shaders
-   - CRT effects are applied in real-time
-   - Final output is displayed with proper scaling
-
-## 🛠️ Technical Details
-
-- Uses WebGL for hardware-accelerated effects
-- Implements custom font loading and DPI detection
-- Handles window resizing while maintaining aspect ratio
-- Supports high-DPI displays
-- Uses CSS Grid for responsive layout
-
-## 📝 Todo
-
-- Handle copy/paste functionality
-- Implement scrollback buffer
-- Add more terminal commands
-- Improve mobile device support
-
-## 🚀 Getting Started
-
-1. Clone the repository
-2. Open `index.html` in a modern web browser
-3. Type 'help' to see available commands
-
-## 💻 Browser Support
-
-Requires a modern browser with WebGL support for full CRT effects.
+Note: Requires WebGL support for CRT effects.
