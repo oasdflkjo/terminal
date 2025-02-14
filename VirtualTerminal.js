@@ -200,4 +200,12 @@ class VirtualTerminal {
             visible: this.cursorVisible
         };
     }
+
+    stopCursorBlink() {
+        if (this.cursorBlinkInterval) {
+            clearInterval(this.cursorBlinkInterval);
+            this.cursorBlinkInterval = null;
+        }
+        this.cursorVisible = false;
+    }
 } 

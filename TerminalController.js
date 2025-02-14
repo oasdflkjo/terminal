@@ -16,6 +16,8 @@ class TerminalController {
         // Get input element
         this.input = document.getElementById('terminal-input');
         
+        this.state = 'terminal'; // Add state management: 'terminal' or 'game'
+        
         this.setupInputHandler();
         
         // Display welcome message and prompt without extra newline
@@ -25,25 +27,28 @@ class TerminalController {
 
     setupInputHandler() {
         document.addEventListener('keydown', (e) => {
-            // Prevent default behavior for terminal control keys
-            if (['ArrowUp', 'ArrowDown', 'Backspace'].includes(e.key)) {
-                e.preventDefault();
-            }
+            // Only handle terminal input if we're in terminal state
+            if (this.state === 'terminal') {
+                // Prevent default behavior for terminal control keys
+                if (['ArrowUp', 'ArrowDown', 'Backspace'].includes(e.key)) {
+                    e.preventDefault();
+                }
 
-            if (e.key === 'Enter') {
-                this.handleEnter();
-            } else if (e.key === 'Backspace') {
-                this.handleBackspace();
-            } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                this.handleCharacter(e.key);
-            } else if (e.key === 'ArrowUp') {
-                this.navigateHistory('up');
-            } else if (e.key === 'ArrowDown') {
-                this.navigateHistory('down');
+                if (e.key === 'Enter') {
+                    this.handleEnter();
+                } else if (e.key === 'Backspace') {
+                    this.handleBackspace();
+                } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    this.handleCharacter(e.key);
+                } else if (e.key === 'ArrowUp') {
+                    this.navigateHistory('up');
+                } else if (e.key === 'ArrowDown') {
+                    this.navigateHistory('down');
+                }
+                
+                // Keep input focused in terminal mode
+                this.input.focus();
             }
-            
-            // Keep input focused
-            this.input.focus();
         });
     }
 
@@ -162,6 +167,9 @@ class TerminalController {
             case 'whois':
                 this.showWhois();
                 break;
+            case 'snake':
+                this.startSnakeGame();
+                break;
             default:
                 this.writeOutput(`Command not found: ${cmd}\n`);
         }
@@ -175,6 +183,7 @@ class TerminalController {
             '  clear   - Clear the terminal screen',
             '  echo    - Display the specified text',
             '  whois   - Display information about the developer',
+            '  snake   - Play a game of Snake',
             ''
         ].join('\n');
         
@@ -255,5 +264,71 @@ class TerminalController {
 
     executeCommand(command) {
         this.processCommand(command);
+    }
+
+    startSnakeGame() {
+        // Clean the screen
+        this.clearScreen();
+        
+        try {
+            // Switch to game state
+            this.state = 'game';
+            
+            // Create and start the game
+            this.snakeGame = new SnakeGame(this.terminal);
+            this.snakeGame.draw();
+            
+            // Disable terminal input and cursor
+            this.terminal.stopCursorBlink();
+            this.input.blur();
+            this.input.disabled = true;
+            
+            // Set up game-specific keydown handler
+            document.addEventListener('keydown', this.handleGameInput);
+            
+            // Start the game
+            this.snakeGame.start();
+            
+        } catch (error) {
+            this.writeOutput(`Error starting game: ${error.message}\n`);
+            this.returnToTerminal();
+        }
+        
+        this.terminal.render();
+    }
+
+    handleGameInput = (e) => {
+        if (this.state === 'game' && 
+            ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'r', 'R', 'Escape'].includes(e.key)) {
+            e.preventDefault();
+            
+            if (e.key === 'Escape') {
+                this.returnToTerminal();
+                return;
+            }
+            
+            this.snakeGame.handleInput(e.key);
+        }
+    }
+
+    returnToTerminal() {
+        // Remove game input handler
+        document.removeEventListener('keydown', this.handleGameInput);
+        
+        // Switch back to terminal state
+        this.state = 'terminal';
+        
+        // Re-enable terminal input and cursor
+        this.terminal.startCursorBlink();
+        this.input.disabled = false;
+        
+        if (this.snakeGame) {
+            this.snakeGame.stop();
+        }
+        
+        // Show welcome banner instead of just clearing screen
+        this.terminal.initializeBuffer();
+        this.displayWelcomeMessage();
+        this.input.focus();
     }
 } 
