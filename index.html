@@ -1,36 +1,45 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <title>Petri Pihla</title>
-  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="image" property="og:image"
-    content="https://raw.githubusercontent.com/oasdflkjo/terminal/master/data/thumb.jpg">
-  <link rel="stylesheet" type="text/css" media="screen" href="data/style.css">
-  <meta name="description" property="og:description"
-    content="This is Petri Pihla's personal website. It's plain HTML CSS JS site that emulates terminal UI.">
-  <meta name="author" content="[Petri Pihla]">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRT Terminal</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-  <div id="terminal">
-    <a id="before"></a>
-  </div>
-  <div id="command" onclick="$('texter').focus();">
-    <textarea type="text" id="texter" onkeyup="typeIt(this, event)" onkeydown="typeIt(this, event); 
-                   moveIt(this.value.length, event)" onkeypress="typeIt(this, event);" autofocus=""></textarea>
-    <div id="liner">
-      <span id="typer"></span><b class="cursor" id="cursor" style="left: 0px;">█</b>
+    <div class="terminal-wrapper crt-mode">
+        <canvas id="crt-canvas"></canvas>
+        <div class="terminal-container">
+            <div id="terminal-screen"></div>
+            <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
+        </div>
     </div>
-  </div>
-  <script src="data/cursor.js"></script>
-  <script src="data/commands.js"></script>
-  <script src="data/main.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="VirtualTerminal.js"></script>
+    <script src="TerminalRenderer.js"></script>
+    <script src="TerminalController.js"></script>
+    <script src="CRTEffect.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            // Create virtual terminal
+            const virtualTerminal = new VirtualTerminal();
+            
+            // Create renderer
+            const renderer = new TerminalRenderer(virtualTerminal);
+            
+            // Create controller
+            const controller = new TerminalController(virtualTerminal);
+            
+            // Set up CRT effect
+            const canvas = document.getElementById('crt-canvas');
+            const crtEffect = new CRTEffect(canvas, renderer);
 
-
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                canvas.width = renderer.getCanvas().width;
+                canvas.height = renderer.getCanvas().height;
+            });
+        });
+    </script>
 </body>
-
-</html>
+</html> 
