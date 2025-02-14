@@ -194,9 +194,8 @@ class TerminalController {
     showWhois() {
         const whois = [
             "Hi reader 👋",
-            "I'm a Software Engineer / Developer / Wizard",
+            "I'm a Software Engineer / Developer / Wizard 🧙",
             "I tinker a lot with embedded systems, but my curiosity doesn't stop there.",
-            "I'm usually diving into multiple topics at once—because why not?",
             ""
         ];
         
