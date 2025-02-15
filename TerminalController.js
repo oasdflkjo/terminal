@@ -1,6 +1,7 @@
 class TerminalController {
     constructor(virtualTerminal) {
         this.terminal = virtualTerminal;
+        this.renderer = new TerminalRenderer(virtualTerminal);
         this.currentLine = '';
         this.commandHistory = [];
         this.historyIndex = null;
@@ -107,7 +108,7 @@ class TerminalController {
         if (char.length === 1 && char.charCodeAt(0) >= 32 && this.currentLine !== null) {
             this.currentLine += char;
             this.terminal.writeCharacter(char, false); // false flag for clean rendering
-            this.terminal.render();
+            this.renderer.render();
         }
     }
 
@@ -173,7 +174,7 @@ class TerminalController {
             default:
                 this.writeOutput(`Command not found: ${cmd}\n`);
         }
-        this.terminal.render();
+        this.renderer.render();
     }
 
     showHelp() {
@@ -188,7 +189,6 @@ class TerminalController {
         ].join('\n');
         
         this.writeOutput(helpText);
-        this.displayPrompt();
     }
 
     showWhois() {
@@ -200,7 +200,6 @@ class TerminalController {
         ];
         
         this.writeOutput(whois.join('\n'));
-        this.displayPrompt();
     }
 
     clearScreen() {
@@ -293,7 +292,7 @@ class TerminalController {
             this.returnToTerminal();
         }
         
-        this.terminal.render();
+        this.renderer.render();
     }
 
     handleGameInput = (e) => {
