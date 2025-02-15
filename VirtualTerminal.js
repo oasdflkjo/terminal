@@ -1,8 +1,6 @@
-class VirtualTerminal {
+class VirtualTerminal extends DisplayBuffer {
     constructor(columns = 80, rows = 28) {
-        this.columns = columns;
-        this.rows = rows;
-        this.buffer = [];
+        super(columns, rows);  // Call parent constructor
         this.cursorX = 0;
         this.cursorY = 0;
         this.cursorVisible = true;
@@ -11,19 +9,7 @@ class VirtualTerminal {
         this.animationQueue = [];  // Queue for character animations
         this.isAnimating = false;
         
-        this.initializeBuffer();
         this.startCursorBlink();
-    }
-
-    initializeBuffer() {
-        for (let y = 0; y < this.rows; y++) {
-            this.buffer[y] = new Array(this.columns).fill({
-                character: ' ',
-                color: '#33ff33',
-                bgColor: '#000000',
-                style: 'normal'
-            });
-        }
     }
 
     startCursorBlink() {
@@ -187,10 +173,6 @@ class VirtualTerminal {
 
     toggleCursor() {
         this.cursorVisible = !this.cursorVisible;
-    }
-
-    getBuffer() {
-        return this.buffer;
     }
 
     getCursorPosition() {

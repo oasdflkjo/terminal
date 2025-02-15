@@ -69,6 +69,7 @@
     </div>
 
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="DisplayBuffer.js"></script>
     <script src="VirtualTerminal.js"></script>
     <script src="TerminalRenderer.js"></script>
     <script src="TerminalController.js"></script>
@@ -76,18 +77,26 @@
     <script src="SnakeGame.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            // Create virtual terminal
-            const virtualTerminal = new VirtualTerminal();
+            // Create base components
+            const virtualTerminal = new VirtualTerminal(80, 28);  // Use VirtualTerminal as our buffer
+            const renderer = new TerminalRenderer();
             
-            // Create renderer
-            const renderer = new TerminalRenderer(virtualTerminal);
-            
-            // Create controller with both terminal and renderer
-            const controller = new TerminalController(virtualTerminal);
+            // Set the virtual terminal as the buffer to render
+            renderer.setBuffer(virtualTerminal);
             
             // Set up CRT effect
             const canvas = document.getElementById('crt-canvas');
             const crtEffect = new CRTEffect(canvas, renderer);
+
+            // Create controller with virtual terminal and renderer
+            const controller = new TerminalController(virtualTerminal, renderer);
+
+            // Set up render loop
+            function render() {
+                renderer.render();
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
 
             // Handle window resize
             window.addEventListener('resize', () => {

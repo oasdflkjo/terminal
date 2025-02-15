@@ -1,7 +1,7 @@
 class TerminalController {
-    constructor(virtualTerminal) {
+    constructor(virtualTerminal, renderer) {
         this.terminal = virtualTerminal;
-        this.renderer = new TerminalRenderer(virtualTerminal);
+        this.renderer = renderer;  // Store renderer reference
         this.currentLine = '';
         this.commandHistory = [];
         this.historyIndex = null;
@@ -100,15 +100,15 @@ class TerminalController {
         if (this.currentLine.length > 0) {
             this.currentLine = this.currentLine.slice(0, -1);
             this.terminal.backspace();
+            this.renderer.render();
         }
     }
 
     handleCharacter(char) {
-        // Only accept printable characters and ensure we have a currentLine buffer
         if (char.length === 1 && char.charCodeAt(0) >= 32 && this.currentLine !== null) {
             this.currentLine += char;
-            this.terminal.writeCharacter(char, false); // false flag for clean rendering
-            this.renderer.render();
+            this.terminal.writeCharacter(char, false);
+            this.renderer.render();  // Render after writing character
         }
     }
 

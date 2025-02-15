@@ -1,13 +1,14 @@
 class TerminalRenderer {
-    constructor(virtualTerminal) {
-        this.virtualTerminal = virtualTerminal;
+    constructor() {
+        this.currentBuffer = null;
         this.screen = document.getElementById('terminal-screen');
-        
-        // Create virtual canvas for rendering
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d');
         
-        // Calculate DPI scale
+        // Default dimensions until buffer is set
+        this.columns = 80;  // Default terminal width
+        this.rows = 24;     // Default terminal height
+        
         this.calculateDPIScale();
         
         // Wait for font to load before initializing
@@ -17,6 +18,16 @@ class TerminalRenderer {
             console.log('Falling back to system monospace');
             this.initializeRenderer();
         });
+    }
+
+    setBuffer(buffer) {
+        this.currentBuffer = buffer;
+        const dimensions = buffer.getDimensions();
+        this.columns = dimensions.width;
+        this.rows = dimensions.height;
+        // Recalculate dimensions when buffer changes
+        this.calculateCharacterDimensions();
+        this.adjustTerminalSize();
     }
 
     calculateDPIScale() {
@@ -68,12 +79,12 @@ class TerminalRenderer {
         document.documentElement.style.setProperty('--char-height', `${this.charHeight}px`);
         
         // Update canvas size with DPI scaling
-        this.canvas.width = this.virtualTerminal.columns * this.charWidth * this.dpiScale;
-        this.canvas.height = this.virtualTerminal.rows * this.charHeight * this.dpiScale;
+        this.canvas.width = this.columns * this.charWidth * this.dpiScale;
+        this.canvas.height = this.rows * this.charHeight * this.dpiScale;
         
         // Set canvas CSS size
-        this.canvas.style.width = `${this.virtualTerminal.columns * this.charWidth}px`;
-        this.canvas.style.height = `${this.virtualTerminal.rows * this.charHeight}px`;
+        this.canvas.style.width = `${this.columns * this.charWidth}px`;
+        this.canvas.style.height = `${this.rows * this.charHeight}px`;
         
         // Scale the context for high DPI
         this.context.scale(this.dpiScale, this.dpiScale);
@@ -93,6 +104,11 @@ class TerminalRenderer {
     }
 
     render() {
+        if (!this.currentBuffer) return;
+
+        const buffer = this.currentBuffer.getBuffer();
+        const dimensions = this.currentBuffer.getDimensions();
+
         // Reset transform before clearing
         this.context.setTransform(1, 0, 0, 1, 0, 0);
         
@@ -106,47 +122,45 @@ class TerminalRenderer {
         // Set text properties
         this.context.font = `${this.getFontSize()} "Cascadia Mono"`;
         this.context.textBaseline = 'top';
-        this.context.fillStyle = '#33ff33';
-        
-        // Enable font smoothing
-        this.context.textRendering = 'optimizeLegibility';
-        this.context.imageSmoothingEnabled = false;
         
         // Render buffer
-        const buffer = this.virtualTerminal.getBuffer();
-        const cursor = this.virtualTerminal.getCursorPosition();
-        
-        for (let y = 0; y < this.virtualTerminal.rows; y++) {
-            for (let x = 0; x < this.virtualTerminal.columns; x++) {
+        for (let y = 0; y < dimensions.height; y++) {
+            for (let x = 0; x < dimensions.width; x++) {
                 const cell = buffer[y][x];
                 
                 // Draw character
                 if (cell && cell.character !== ' ') {
+                    this.context.fillStyle = cell.color;
                     this.context.fillText(
                         cell.character,
                         x * this.charWidth,
                         y * this.charHeight
                     );
                 }
-                
-                // Draw cursor
-                if (x === cursor.x && y === cursor.y && cursor.visible) {
-                    this.context.fillStyle = '#33ff33';
-                    this.context.fillRect(
-                        x * this.charWidth,
-                        y * this.charHeight,
-                        this.charWidth,
-                        this.charHeight
+            }
+        }
+
+        // Draw cursor if the buffer is a VirtualTerminal
+        if (this.currentBuffer instanceof VirtualTerminal) {
+            const cursor = this.currentBuffer.getCursorPosition();
+            if (cursor.visible) {
+                this.context.fillStyle = '#33ff33';
+                this.context.fillRect(
+                    cursor.x * this.charWidth,
+                    cursor.y * this.charHeight,
+                    this.charWidth,
+                    this.charHeight
+                );
+
+                // If there's a character under the cursor, draw it in inverse
+                const cell = buffer[cursor.y][cursor.x];
+                if (cell && cell.character !== ' ') {
+                    this.context.fillStyle = '#000000';
+                    this.context.fillText(
+                        cell.character,
+                        cursor.x * this.charWidth,
+                        cursor.y * this.charHeight
                     );
-                    if (cell && cell.character !== ' ') {
-                        this.context.fillStyle = '#000000';
-                        this.context.fillText(
-                            cell.character,
-                            x * this.charWidth,
-                            y * this.charHeight
-                        );
-                    }
-                    this.context.fillStyle = '#33ff33';
                 }
             }
         }
