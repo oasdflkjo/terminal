@@ -72,7 +72,7 @@ class VirtualTerminal {
     }
 
     queueCharacterAnimation(finalChar) {
-        const CHARS = "0123456789@#$%&*";
+        const CHARS = "asdflkjoASDFLKJ0123456789@#$%&*";
         const STEPS = 5; // More steps for smoother animation
         const WAVE_DELAY = 20; // Delay between columns starting animation
         const STEP_DELAY = 30; // Delay between character changes
