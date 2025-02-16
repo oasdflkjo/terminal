@@ -68,44 +68,50 @@
         </div>
     </div>
 
+    <!-- Load dependencies first -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="VirtualTerminal.js"></script>
-    <script src="TerminalRenderer.js"></script>
-    <script src="TerminalController.js"></script>
-    <script src="CRTEffect.js"></script>
-    <script src="SnakeGame.js"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            // Create virtual terminal
-            const virtualTerminal = new VirtualTerminal();
-            
-            // Create renderer
-            const renderer = new TerminalRenderer(virtualTerminal);
-            
-            // Create controller
-            const controller = new TerminalController(virtualTerminal);
-            
-            // Set up CRT effect
-            const canvas = document.getElementById('crt-canvas');
-            const crtEffect = new CRTEffect(canvas, renderer);
+    <script src="src/core/VirtualTerminal.js"></script>
+    <script src="src/core/TerminalRenderer.js"></script>
+    <script src="src/core/CRTEffect.js"></script>
+    <script src="src/modules/snake/SnakeGame.js"></script>
 
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                canvas.width = renderer.getCanvas().width;
-                canvas.height = renderer.getCanvas().height;
-            });
+    <!-- Initialize the terminal system -->
+    <script type="module">
+        import ModuleManager from './src/core/ModuleManager.js';
+        import TerminalModule from './src/modules/terminal/TerminalModule.js';
+        import SnakeModule from './src/modules/snake/SnakeModule.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Initialize the terminal renderer
+                const terminalScreen = document.getElementById('terminal-screen');
+                const renderer = new TerminalRenderer(terminalScreen);
+                
+                // Initialize the virtual terminal with the renderer
+                const terminal = new VirtualTerminal();
+                terminal.setRenderer(renderer);  // Make sure VirtualTerminal has this method
+                renderer.setVirtualTerminal(terminal);  // Make sure TerminalRenderer has this method
+                
+                // Initialize CRT effect after renderer is ready
+                const canvas = document.getElementById('crt-canvas');
+                const crtEffect = new CRTEffect(canvas, renderer);  // Pass renderer to CRTEffect
+                
+                // Wait for renderer to be ready
+                await renderer.init();  // Make sure TerminalRenderer has an init method
+                
+                // Start CRT effect
+                crtEffect.start();
+                
+                // Initialize the module system
+                const moduleManager = new ModuleManager(terminal);
+                moduleManager.registerModule('terminal', new TerminalModule(terminal, moduleManager));
+                moduleManager.registerModule('snake', new SnakeModule(terminal, moduleManager));
+                
+                moduleManager.init();
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
         });
-
-        // Mobile detection
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // Show/hide content based on device
-        if (isMobile()) {
-            document.getElementById('mobile-message').style.display = 'block';
-            document.getElementById('desktop-content').style.display = 'none';
-        }
     </script>
 </body>
 </html> 

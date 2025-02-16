@@ -85,7 +85,7 @@ graph TD
     VC -- "Canvas Texture" --> TEX
     WGL -- "Final Pixels" --> Display
 ```
-
+---
 ```mermaid
     graph TD
     subgraph Applications

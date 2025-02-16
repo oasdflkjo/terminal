@@ -1,7 +1,8 @@
 class TerminalRenderer {
-    constructor(virtualTerminal) {
-        this.virtualTerminal = virtualTerminal;
-        this.screen = document.getElementById('terminal-screen');
+    constructor(element) {
+        this.element = element;
+        this.virtualTerminal = null;
+        this.initialized = false;
         
         // Create virtual canvas for rendering
         this.canvas = document.createElement('canvas');
@@ -83,8 +84,8 @@ class TerminalRenderer {
         const padding = 20; // Terminal padding
         document.documentElement.style.setProperty('--terminal-padding', `${padding}px`);
         
-        this.screen.style.width = `${this.canvas.width / this.dpiScale}px`;
-        this.screen.style.height = `${this.canvas.height / this.dpiScale}px`;
+        this.element.style.width = `${this.canvas.width / this.dpiScale}px`;
+        this.element.style.height = `${this.canvas.height / this.dpiScale}px`;
         
         // Set container size with padding
         const container = document.querySelector('.terminal-container');
@@ -92,7 +93,19 @@ class TerminalRenderer {
         container.style.height = `${this.canvas.height / this.dpiScale + (padding * 2)}px`;
     }
 
+    async init() {
+        // Any initialization code
+        this.initialized = true;
+        this.startRenderLoop();
+    }
+
+    setVirtualTerminal(terminal) {
+        this.virtualTerminal = terminal;
+    }
+
     render() {
+        if (!this.virtualTerminal || !this.initialized) return;
+        
         // Reset transform before clearing
         this.context.setTransform(1, 0, 0, 1, 0, 0);
         
@@ -152,8 +165,8 @@ class TerminalRenderer {
         }
         
         // Update screen
-        this.screen.innerHTML = '';
-        this.screen.appendChild(this.canvas);
+        this.element.innerHTML = '';
+        this.element.appendChild(this.canvas);
     }
 
     startRenderLoop() {

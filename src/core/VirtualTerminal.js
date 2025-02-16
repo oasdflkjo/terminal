@@ -3,6 +3,7 @@ class VirtualTerminal {
         this.columns = columns;
         this.rows = rows;
         this.buffer = [];
+        this.renderer = null;
         this.cursorX = 0;
         this.cursorY = 0;
         this.cursorVisible = true;
@@ -13,6 +14,10 @@ class VirtualTerminal {
         
         this.initializeBuffer();
         this.startCursorBlink();
+    }
+
+    setRenderer(renderer) {
+        this.renderer = renderer;
     }
 
     initializeBuffer() {
