@@ -104,8 +104,8 @@
                 
                 // Initialize the module system
                 const moduleManager = new ModuleManager(terminal);
-                moduleManager.registerModule('terminal', new TerminalModule(terminal, moduleManager));
-                moduleManager.registerModule('snake', new SnakeModule(terminal, moduleManager));
+                moduleManager.registerModule('terminal', TerminalModule);
+                moduleManager.registerModule('snake', SnakeModule);
                 
                 moduleManager.init();
             } catch (error) {

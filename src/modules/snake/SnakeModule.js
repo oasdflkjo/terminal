@@ -1,39 +1,27 @@
-import ModuleController from '../../core/ModuleController.js';
-
-class SnakeModule extends ModuleController {
+class SnakeModule {
     constructor(virtualTerminal, moduleManager) {
-        super(virtualTerminal);
+        this.terminal = virtualTerminal;
         this.moduleManager = moduleManager;
+        this.active = false;
         this.snakeGame = null;
     }
 
     activate() {
-        super.activate();
-        
-        // Clear the terminal buffer
-        this.terminal.buffer = [];
-        this.terminal.initializeBuffer();
-        this.terminal.cursorX = 0;
-        this.terminal.cursorY = 0;
-        
         try {
+            // Disable terminal input and cursor for game mode
+            this.moduleManager.setCursorState(false);
+            this.moduleManager.setInputState(false);
+            
             this.snakeGame = new SnakeGame(this.terminal);
             this.snakeGame.draw();
-            
-            this.terminal.stopCursorBlink();
-            this.moduleManager.input.blur();
-            this.moduleManager.input.disabled = true;
-            
             this.snakeGame.start();
         } catch (error) {
             console.error('Error starting game:', error);
-            this.handleEscape();  // Use the new method for error cases
+            this.handleEscape();
         }
     }
 
     deactivate() {
-        super.deactivate();
-        
         if (this.snakeGame) {
             this.snakeGame.stop();
             this.snakeGame = null;
@@ -56,22 +44,11 @@ class SnakeModule extends ModuleController {
     }
 
     handleEscape() {
-        // First stop the game and clean up
         if (this.snakeGame) {
             this.snakeGame.stop();
             this.snakeGame = null;
         }
-        
-        // Clear the screen before transitioning
-        this.terminal.buffer = [];
-        this.terminal.initializeBuffer();
-        this.terminal.cursorX = 0;
-        this.terminal.cursorY = 0;
-        
-        // Let the module manager handle the transition
-        if (this.moduleManager) {
-            this.moduleManager.activateModule('terminal');
-        }
+        this.moduleManager.activateModule('terminal');
     }
 }
 

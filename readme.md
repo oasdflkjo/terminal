@@ -38,78 +38,25 @@ Just open `index.html` in a modern browser. Type 'help' to see available command
 
 Note: Requires WebGL support for CRT effects.
 
-```mermaid
-graph TD
-    subgraph User Input
-        UI[User Keyboard Input]
-        TC[Terminal Controller]
-    end
 
-    subgraph Virtual Layer
-        VT[Virtual Terminal]
-        B[Character Buffer]
-    end
-
-    subgraph Rendering Layer
-        TR[Terminal Renderer]
-        VC[Virtual Canvas]
-    end
-
-    subgraph CRT Effect
-        CRT[CRT Effect]
-        WGL[WebGL Context]
-        VS[Vertex Shader]
-        FS[Fragment Shader]
-        TEX[Texture]
-    end
-
-    UI --> TC
-    TC --> VT
-    VT --> B
-    B --> TR
-    TR --> VC
-    VC --> CRT
-    CRT --> WGL
-    WGL --> VS
-    WGL --> FS
-    VC --> TEX
-    TEX --> WGL
-    WGL --> Display[Screen Display]
-
-    %% Data flow annotations
-    UI -- "Keystrokes" --> TC
-    TC -- "Commands" --> VT
-    VT -- "Character Updates" --> B
-    B -- "Buffer State" --> TR
-    TR -- "Rendered Content" --> VC
-    VC -- "Canvas Texture" --> TEX
-    WGL -- "Final Pixels" --> Display
-```
 ---
 ```mermaid
     graph TD
-    subgraph Applications
-        TC[Terminal Controller]
-        SG[Snake Game]
+    MC[ModuleManager.js]
+    subgraph Modules 
+        TM[TerminalModule.js]
+        SM[SnakeModule.js]
     end
 
-    subgraph Display Layer
-        VT[Virtual Terminal]
-        B[Character Buffer<br/>80x24 Grid]
+    subgraph Virtual Display Layer
+        VT[VirtualTerminal.js Character Buffer<br/>80x24 Grid]
     end
 
     subgraph Rendering Pipeline
-        TR[Terminal Renderer]
-        CRT[CRT Effect]
+        TR[TerminalRenderer.js <br/> uses html2canvas to capture the virtual display]
+        CRT[CRTEffect.js <br/> uses captured image as a texture for the shader]
     end
 
-    TC --> VT
-    SG --> VT
-    VT --> B
-    B --> TR
-    TR --> CRT
-
-    %% Application only knows about Virtual Terminal
-    TC -. "Only knows about" .-> VT
-    SG -. "Only knows about" .-> VT
-   ```
+    TM --> VT
+    SM --> VT
+    VT --> TR --> CRT

@@ -1,9 +1,8 @@
-import ModuleController from '../../core/ModuleController.js';
-
-class TerminalModule extends ModuleController {
+class TerminalModule {
     constructor(virtualTerminal, moduleManager) {
-        super(virtualTerminal);
+        this.terminal = virtualTerminal;
         this.moduleManager = moduleManager;
+        this.active = false;
         this.currentLine = '';
         this.commandHistory = [];
         this.historyIndex = null;
@@ -12,11 +11,9 @@ class TerminalModule extends ModuleController {
     }
 
     activate() {
-        super.activate();
+        this.moduleManager.setCursorState(true);
+        this.moduleManager.setInputState(true);
         this.displayWelcomeMessage();
-        this.terminal.startCursorBlink();
-        this.moduleManager.input.disabled = false;
-        this.moduleManager.input.focus();
     }
 
     handleInput(e) {
