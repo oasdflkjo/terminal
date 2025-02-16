@@ -1,3 +1,8 @@
+www.petripihla.com
+
+![image](https://github.com/user-attachments/assets/7c0866dd-d2c1-41d5-8a86-0f6e127d5215)
+
+
 # Terminal Website
 
 A retro-style terminal website that simulates a CRT display effect with interactive commands and games.
