@@ -7,7 +7,7 @@ class CRTEffect {
         
         console.log('CRTEffect constructor', { canvas, terminalRenderer });
         this.canvas = canvas;
-        this.renderer = terminalRenderer;
+        this.terminalRenderer = terminalRenderer;
         
         // Initial setup
         this.resizeCanvas();
@@ -248,17 +248,28 @@ class CRTEffect {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
     }
 
-    async updateTexture() {
-        // Use renderer's canvas as texture source
+    updateTexture() {
+        if (!this.terminalRenderer) return;
+        
+        const terminalCanvas = this.terminalRenderer.getCanvas();
+        if (!terminalCanvas) return;
+
+        // Bind the texture
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
-        this.gl.texImage2D(
-            this.gl.TEXTURE_2D,
-            0,
-            this.gl.RGBA,
-            this.gl.RGBA,
-            this.gl.UNSIGNED_BYTE,
-            this.renderer.getCanvas()
-        );
+        
+        try {
+            // Copy the terminal canvas content to the WebGL texture
+            this.gl.texImage2D(
+                this.gl.TEXTURE_2D,
+                0,
+                this.gl.RGBA,
+                this.gl.RGBA,
+                this.gl.UNSIGNED_BYTE,
+                terminalCanvas
+            );
+        } catch (error) {
+            console.error('Error updating texture:', error);
+        }
     }
 
     async render() {
