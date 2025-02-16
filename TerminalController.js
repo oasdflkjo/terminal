@@ -4,23 +4,11 @@ class TerminalController {
         this.currentLine = '';
         this.commandHistory = [];
         this.historyIndex = null;
-        this.prompt = '> '; // Simple angle bracket (U+003E)
-        // Alternative options:
-        // this.prompt = '$ ';  // Traditional shell prompt
-        // this.prompt = '❯ ';  // Another monospace-friendly arrow
-        // this.prompt = '> ';  // Simple angle bracket
-        // this.prompt = '▶ ';  // Triangle pointer
-        
-        this.maxHistorySize = 1000; // Maximum number of commands to store
-        
-        // Get input element
-        this.input = document.getElementById('terminal-input');
-        
-        this.state = 'terminal'; // Add state management: 'terminal' or 'game'
-        
+        this.prompt = '> '; 
+        this.maxHistorySize = 10;
+        this.input = document.getElementById('terminal-input'); 
+        this.state = 'terminal';
         this.setupInputHandler();
-        
-        // Display welcome message and prompt without extra newline
         this.displayWelcomeMessage();
         this.input.focus();
     }
@@ -64,10 +52,9 @@ class TerminalController {
             "                                                                           ",
             "",
             'Type "help" for available commands',
-            "" // Add empty line before prompt
+            ""
         ];
         
-        // Write welcome message
         this.writeOutput(banner.join('\n'));
         
         // Display prompt (will be on new line)
@@ -107,7 +94,6 @@ class TerminalController {
         if (char.length === 1 && char.charCodeAt(0) >= 32 && this.currentLine !== null) {
             this.currentLine += char;
             this.terminal.writeCharacter(char, false); // false flag for clean rendering
-            this.terminal.render();
         }
     }
 
@@ -173,7 +159,6 @@ class TerminalController {
             default:
                 this.writeOutput(`Command not found: ${cmd}\n`);
         }
-        this.terminal.render();
     }
 
     showHelp() {
@@ -188,7 +173,6 @@ class TerminalController {
         ].join('\n');
         
         this.writeOutput(helpText);
-        this.displayPrompt();
     }
 
     showWhois() {
@@ -200,7 +184,6 @@ class TerminalController {
         ];
         
         this.writeOutput(whois.join('\n'));
-        this.displayPrompt();
     }
 
     clearScreen() {
@@ -209,9 +192,6 @@ class TerminalController {
         this.terminal.initializeBuffer();
         this.terminal.cursorX = 0;
         this.terminal.cursorY = 0;
-        
-        // Show prompt on clean screen
-        this.displayPrompt();
     }
 
     displayPrompt() {
@@ -293,7 +273,6 @@ class TerminalController {
             this.returnToTerminal();
         }
         
-        this.terminal.render();
     }
 
     handleGameInput = (e) => {
