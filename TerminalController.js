@@ -4,23 +4,11 @@ class TerminalController {
         this.currentLine = '';
         this.commandHistory = [];
         this.historyIndex = null;
-        this.prompt = '> '; // Simple angle bracket (U+003E)
-        // Alternative options:
-        // this.prompt = '$ ';  // Traditional shell prompt
-        // this.prompt = '❯ ';  // Another monospace-friendly arrow
-        // this.prompt = '> ';  // Simple angle bracket
-        // this.prompt = '▶ ';  // Triangle pointer
-        
-        this.maxHistorySize = 1000; // Maximum number of commands to store
-        
-        // Get input element
-        this.input = document.getElementById('terminal-input');
-        
-        this.state = 'terminal'; // Add state management: 'terminal' or 'game'
-        
+        this.prompt = '> '; 
+        this.maxHistorySize = 10;
+        this.input = document.getElementById('terminal-input'); 
+        this.state = 'terminal';
         this.setupInputHandler();
-        
-        // Display welcome message and prompt without extra newline
         this.displayWelcomeMessage();
         this.input.focus();
     }
@@ -64,10 +52,9 @@ class TerminalController {
             "                                                                           ",
             "",
             'Type "help" for available commands',
-            "" // Add empty line before prompt
+            ""
         ];
         
-        // Write welcome message
         this.writeOutput(banner.join('\n'));
         
         // Display prompt (will be on new line)

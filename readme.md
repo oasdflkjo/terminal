@@ -37,3 +37,79 @@ The terminal operates in three main steps:
 Just open `index.html` in a modern browser. Type 'help' to see available commands.
 
 Note: Requires WebGL support for CRT effects.
+
+```mermaid
+graph TD
+    subgraph User Input
+        UI[User Keyboard Input]
+        TC[Terminal Controller]
+    end
+
+    subgraph Virtual Layer
+        VT[Virtual Terminal]
+        B[Character Buffer]
+    end
+
+    subgraph Rendering Layer
+        TR[Terminal Renderer]
+        VC[Virtual Canvas]
+    end
+
+    subgraph CRT Effect
+        CRT[CRT Effect]
+        WGL[WebGL Context]
+        VS[Vertex Shader]
+        FS[Fragment Shader]
+        TEX[Texture]
+    end
+
+    UI --> TC
+    TC --> VT
+    VT --> B
+    B --> TR
+    TR --> VC
+    VC --> CRT
+    CRT --> WGL
+    WGL --> VS
+    WGL --> FS
+    VC --> TEX
+    TEX --> WGL
+    WGL --> Display[Screen Display]
+
+    %% Data flow annotations
+    UI -- "Keystrokes" --> TC
+    TC -- "Commands" --> VT
+    VT -- "Character Updates" --> B
+    B -- "Buffer State" --> TR
+    TR -- "Rendered Content" --> VC
+    VC -- "Canvas Texture" --> TEX
+    WGL -- "Final Pixels" --> Display
+```
+
+```mermaid
+    graph TD
+    subgraph Applications
+        TC[Terminal Controller]
+        SG[Snake Game]
+    end
+
+    subgraph Display Layer
+        VT[Virtual Terminal]
+        B[Character Buffer<br/>80x24 Grid]
+    end
+
+    subgraph Rendering Pipeline
+        TR[Terminal Renderer]
+        CRT[CRT Effect]
+    end
+
+    TC --> VT
+    SG --> VT
+    VT --> B
+    B --> TR
+    TR --> CRT
+
+    %% Application only knows about Virtual Terminal
+    TC -. "Only knows about" .-> VT
+    SG -. "Only knows about" .-> VT
+   ```
