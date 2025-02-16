@@ -24,7 +24,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            display: flex;
+            display: none; /* This will be overridden on mobile */
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -41,8 +41,11 @@
             line-height: 1.5;
         }
 
-        /* Hide desktop content on mobile */
+        /* Show mobile message and hide desktop content on mobile */
         @media (max-width: 768px) {
+            #mobile-message {
+                display: flex !important; /* Override inline style */
+            }
             #desktop-content {
                 display: none;
             }
