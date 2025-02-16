@@ -2,6 +2,7 @@ class TerminalController {
     constructor(virtualTerminal, renderer) {
         this.terminal = virtualTerminal;
         this.renderer = renderer;  // Store renderer reference
+        this.terminalBuffer = virtualTerminal; // Store reference to terminal buffer
         this.currentLine = '';
         this.commandHistory = [];
         this.historyIndex = null;
@@ -171,6 +172,9 @@ class TerminalController {
             case 'snake':
                 this.startSnakeGame();
                 break;
+            case 'asteroids':
+                this.startAsteroidsGame();
+                break;
             default:
                 this.writeOutput(`Command not found: ${cmd}\n`);
         }
@@ -180,11 +184,12 @@ class TerminalController {
     showHelp() {
         const helpText = [
             'Available commands:',
-            '  help    - Show this help message',
-            '  clear   - Clear the terminal screen',
-            '  echo    - Display the specified text',
-            '  whois   - Display information about the developer',
-            '  snake   - Play a game of Snake',
+            '  help      - Show this help message',
+            '  clear     - Clear the terminal screen',
+            '  echo      - Display the specified text',
+            '  whois     - Display information about the developer',
+            '  snake     - Play a game of Snake',
+            '  asteroids - Play a game of Asteroids',
             ''
         ].join('\n');
         
@@ -325,6 +330,100 @@ class TerminalController {
         }
         
         // Show welcome banner instead of just clearing screen
+        this.terminal.initializeBuffer();
+        this.displayWelcomeMessage();
+        this.input.focus();
+    }
+
+    startAsteroidsGame() {
+        // Clean the screen
+        this.clearScreen();
+        
+        try {
+            // Switch to game state
+            this.state = 'asteroids';
+            
+            // Create game buffer
+            const asteroidsBuffer = new AsteroidsBuffer(this.terminal.columns, this.terminal.rows);
+            
+            // Store current terminal setup
+            this.gameBuffer = asteroidsBuffer;
+            
+            // Switch to game buffer
+            this.renderer.setBuffer(asteroidsBuffer);
+            
+            // Disable terminal input and cursor
+            this.terminal.stopCursorBlink();
+            this.input.blur();
+            this.input.disabled = true;
+            
+            // Set up both keydown and keyup handlers
+            document.addEventListener('keydown', this.handleAsteroidsInput);
+            document.addEventListener('keyup', this.handleAsteroidsInput);
+            
+            // Start the game loop
+            this.lastFrameTime = performance.now();
+            this.startGameLoop();
+            
+        } catch (error) {
+            this.writeOutput(`Error starting game: ${error.message}\n`);
+            this.returnToTerminal();
+        }
+    }
+
+    handleAsteroidsInput = (e) => {
+        if (this.state === 'asteroids') {
+            e.preventDefault();
+            
+            if (e.key === 'Escape') {
+                this.returnToTerminal();
+                return;
+            }
+            
+            // Pass both the key and whether it's a keydown event
+            this.gameBuffer.handleInput(e.key, e.type === 'keydown');
+        }
+    }
+
+    startGameLoop = () => {
+        if (this.state !== 'asteroids') return;
+
+        const currentTime = performance.now();
+        const deltaTime = currentTime - (this.lastFrameTime || currentTime);
+        this.lastFrameTime = currentTime;
+
+        // Update game state
+        this.gameBuffer.update(deltaTime);
+        
+        // Render the frame
+        this.renderer.render(currentTime);
+        
+        // Schedule next frame
+        this.gameLoopId = requestAnimationFrame(this.startGameLoop);
+    }
+
+    returnToTerminal() {
+        // Remove both event listeners
+        document.removeEventListener('keydown', this.handleAsteroidsInput);
+        document.removeEventListener('keyup', this.handleAsteroidsInput);
+        
+        // Cancel game loop
+        if (this.gameLoopId) {
+            cancelAnimationFrame(this.gameLoopId);
+            this.gameLoopId = null;
+        }
+        
+        // Switch back to terminal state
+        this.state = 'terminal';
+        
+        // Restore terminal buffer and renderer
+        this.renderer.setBuffer(this.terminalBuffer);
+        
+        // Re-enable terminal input and cursor
+        this.terminal.startCursorBlink();
+        this.input.disabled = false;
+        
+        // Show welcome banner
         this.terminal.initializeBuffer();
         this.displayWelcomeMessage();
         this.input.focus();

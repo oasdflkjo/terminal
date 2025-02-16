@@ -103,11 +103,8 @@ class TerminalRenderer {
         container.style.height = `${this.canvas.height / this.dpiScale + (padding * 2)}px`;
     }
 
-    render() {
+    render(currentTime) {
         if (!this.currentBuffer) return;
-
-        const buffer = this.currentBuffer.getBuffer();
-        const dimensions = this.currentBuffer.getDimensions();
 
         // Reset transform before clearing
         this.context.setTransform(1, 0, 0, 1, 0, 0);
@@ -118,7 +115,22 @@ class TerminalRenderer {
         
         // Apply DPI scaling
         this.context.setTransform(this.dpiScale, 0, 0, this.dpiScale, 0, 0);
+
+        if (this.currentBuffer instanceof AsteroidsBuffer) {
+            this.renderAsteroids(currentTime);
+        } else {
+            this.renderTerminal();
+        }
         
+        // Update screen
+        this.screen.innerHTML = '';
+        this.screen.appendChild(this.canvas);
+    }
+
+    renderTerminal() {
+        const buffer = this.currentBuffer.getBuffer();
+        const dimensions = this.currentBuffer.getDimensions();
+
         // Set text properties
         this.context.font = `${this.getFontSize()} "Cascadia Mono"`;
         this.context.textBaseline = 'top';
@@ -127,8 +139,6 @@ class TerminalRenderer {
         for (let y = 0; y < dimensions.height; y++) {
             for (let x = 0; x < dimensions.width; x++) {
                 const cell = buffer[y][x];
-                
-                // Draw character
                 if (cell && cell.character !== ' ') {
                     this.context.fillStyle = cell.color;
                     this.context.fillText(
@@ -140,7 +150,7 @@ class TerminalRenderer {
             }
         }
 
-        // Draw cursor if the buffer is a VirtualTerminal
+        // Draw cursor if it's a terminal buffer
         if (this.currentBuffer instanceof VirtualTerminal) {
             const cursor = this.currentBuffer.getCursorPosition();
             if (cursor.visible) {
@@ -164,10 +174,97 @@ class TerminalRenderer {
                 }
             }
         }
+    }
+
+    renderAsteroids(currentTime) {
+        const gameState = this.currentBuffer.getGameState();
+        const gameWidth = this.currentBuffer.GAME_WIDTH;
+        const gameHeight = this.currentBuffer.GAME_HEIGHT;
         
-        // Update screen
-        this.screen.innerHTML = '';
-        this.screen.appendChild(this.canvas);
+        // Calculate scaling factors
+        const scaleX = this.canvas.width / gameWidth;
+        const scaleY = this.canvas.height / gameHeight;
+        
+        // Draw player
+        this.context.save();
+        this.context.translate(
+            gameState.player.x * scaleX,
+            gameState.player.y * scaleY
+        );
+        this.context.rotate(gameState.player.rotation);
+        this.context.strokeStyle = '#33ff33';
+        this.context.beginPath();
+        // Draw ship to match collision size
+        const shipWidth = this.currentBuffer.SHIP_DIMENSIONS.width * scaleX;
+        const shipHeight = this.currentBuffer.SHIP_DIMENSIONS.height * scaleY;
+        this.context.moveTo(-shipWidth/2, -shipHeight/2);  // Left point
+        this.context.lineTo(shipWidth/2, 0);               // Tip
+        this.context.lineTo(-shipWidth/2, shipHeight/2);   // Right point
+        this.context.closePath();
+        this.context.stroke();
+        this.context.restore();
+
+        // Draw asteroids with exact collision radius
+        gameState.asteroids.forEach(asteroid => {
+            this.context.beginPath();
+            this.context.strokeStyle = '#33ff33';
+            this.context.arc(
+                asteroid.x * scaleX,
+                asteroid.y * scaleY,
+                asteroid.size * scaleX,  // Size exactly matches collision radius
+                0,
+                Math.PI * 2
+            );
+            this.context.stroke();
+        });
+
+        // Draw bullets with exact collision size
+        gameState.bullets.forEach(bullet => {
+            const bulletSize = this.currentBuffer.BULLET_SIZE * scaleX;
+            this.context.fillStyle = '#33ff33';
+            this.context.fillRect(
+                bullet.x * scaleX - bulletSize/2,
+                bullet.y * scaleY - bulletSize/2,
+                bulletSize,
+                bulletSize
+            );
+        });
+
+        // Draw score
+        this.context.fillStyle = '#33ff33';
+        this.context.font = '20px "Cascadia Mono"';
+        this.context.fillText(`Score: ${gameState.score}`, 10, 30);
+
+        if (gameState.gameOver) {
+            // Draw game over box
+            const gameOverLines = [
+                '┌──────────────────┐',
+                '│     GAME OVER    │',
+                '│                  │',
+                `│    Score: ${gameState.score.toString().padStart(4, ' ')}   │`,
+                '│                  │',
+                '│ Press R to retry │',
+                '│ Press ESC to quit│',
+                '└──────────────────┘'
+            ];
+
+            // Calculate position to center the game over box
+            const boxWidth = gameOverLines[0].length;
+            const boxHeight = gameOverLines.length;
+            const boxX = Math.floor((this.columns - boxWidth) / 2) * this.charWidth;
+            const boxY = Math.floor((this.rows - boxHeight) / 2) * this.charHeight;
+
+            // Draw each line of the game over box
+            this.context.font = `${this.getFontSize()} "Cascadia Mono"`;
+            gameOverLines.forEach((line, i) => {
+                this.context.fillStyle = '#33ff33';
+                this.context.fillText(
+                    line,
+                    boxX,
+                    boxY + (i * this.charHeight)
+                );
+            });
+        }
     }
 
     startRenderLoop() {
