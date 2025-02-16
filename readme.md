@@ -19,7 +19,7 @@ The terminal operates through three main layers:
     end
 
     subgraph Rendering Pipeline
-        TR[TerminalRenderer.js <br/><br/> uses canvas of the virtual terminal]
+        TR[TerminalRenderer.js <br/><br/> renders virtual terminal to canvas]
         CRT[CRTEffect.js <br/><br/> same canvas is used as image for the shader]
     end
 
