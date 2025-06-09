@@ -211,10 +211,24 @@ class TerminalModule {
             case 'snake':
                 this.moduleManager.activateModule('snake');
                 break;
+            case 'doom':
+                const doomModule = this.moduleManager.getModule('doom');
+                if (doomModule) {
+                    if (args[0] === 'stop') {
+                        doomModule.stopDoom();
+                        this.writeOutput('DOOM module stopped.');
+                    } else {
+                        this.writeOutput('Starting DOOM...');
+                        doomModule.startDoom();
+                    }
+                } else {
+                    this.writeOutput('Error: DOOM module not found.');
+                }
+                break;
             default:
                 this.writeOutput(`Command not found: ${cmd}\n`);
         }
     }
 }
 
-export default TerminalModule; 
+export default TerminalModule;

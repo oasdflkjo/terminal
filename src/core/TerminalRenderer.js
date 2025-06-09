@@ -3,6 +3,7 @@ class TerminalRenderer {
         this.element = element;
         this.virtualTerminal = null;
         this.initialized = false;
+        this.activeGameCanvas = null; // To hold the canvas of the active game (e.g., DOOM)
         
         // Create virtual canvas for rendering
         this.canvas = document.createElement('canvas');
@@ -177,7 +178,22 @@ class TerminalRenderer {
         requestAnimationFrame(loop);
     }
 
+    setActiveGameCanvas(gameCanvas) {
+        this.activeGameCanvas = gameCanvas;
+        console.log('Active game canvas set to:', gameCanvas);
+        // If CRTEffect is active, it might need to know about this change
+        if (this.crtEffect && this.crtEffect.isEnabled) {
+            // The CRTEffect's render loop will pick this up via getCanvas()
+            // No direct call to updateTexture here, render loop handles it.
+        }
+    }
+
     getCanvas() {
+        // If a game is active and has a canvas, CRTEffect should use that.
+        if (this.activeGameCanvas) {
+            return this.activeGameCanvas;
+        }
+        // Otherwise, use the main terminal canvas.
         return this.canvas;
     }
-} 
+}

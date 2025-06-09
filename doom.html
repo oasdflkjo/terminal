@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DOOM in the Browser</title>
+  <style>
+    body {
+      background: #000;
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      border: 2px solid #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="600" tabindex="-1"></canvas>
+
+  <script>
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      locateFile: function (path) {
+        // Send both .wasm and .data to the correct folder
+        return 'src/modules/doom/' + path;
+      },
+      onRuntimeInitialized: function() {
+        console.log('DOOM Runtime Initialized. Focusing canvas.');
+        Module.canvas.focus();
+      }
+    };
+  </script>
+
+  <script src="src/modules/doom/chocolate-doom.js"></script>
+</body>
+</html>

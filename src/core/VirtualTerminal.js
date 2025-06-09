@@ -213,4 +213,33 @@ class VirtualTerminal {
         }
         this.cursorVisible = false;
     }
-} 
+
+    async executeCommand(command) {
+        this.history.push(command);
+        this.historyIndex = this.history.length;
+        this.output(`> ${command}`);
+
+        const [cmd, ...args] = command.trim().split(' ');
+
+        if (cmd === 'doom') {
+            const doomModule = this.moduleManager.getModule('doom');
+            if (doomModule) {
+                if (args[0] === 'stop') {
+                    doomModule.stopDoom();
+                    this.output('DOOM module stopped.');
+                } else {
+                    this.output('Starting DOOM...');
+                    doomModule.startDoom();
+                    // Output will be handled by the DoomModule itself or by game interaction
+                }
+            } else {
+                this.output('Error: DOOM module not found.');
+            }
+        } else if (this.commands[cmd]) {
+            this.commands[cmd](args);
+        } else {
+            this.output(`Command not found: ${cmd}`);
+        }
+        this.inputElement.value = '';
+    }
+}
