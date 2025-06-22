@@ -7,6 +7,7 @@ class DoomModule {
         this.doomCanvas = null;
         this.doomScript = null;
         this.isActive = false;
+        this.crtEffect = terminalRenderer.crtEffect; // Reference to CRT effect
         console.log('DoomModule initialized');
     }
 
@@ -20,75 +21,82 @@ class DoomModule {
         // We will start the game via a command
     }
 
+    initializeDoomCanvas() {
+        // Create the DOOM canvas as an offscreen element only
+        this.doomCanvas = document.createElement('canvas');
+        this.doomCanvas.width = this.width;
+        this.doomCanvas.height = this.height;
+        // Do NOT append to DOM
+        // Pass the DOOM canvas to the CRT effect for compositing
+        if (this.crtEffect && typeof this.crtEffect.setDoomCanvas === 'function') {
+            this.crtEffect.setDoomCanvas(this.doomCanvas);
+        }
+        // Initialize the DOOM engine with the offscreen canvas
+        this.doomEngine = new DoomEngine(this.doomCanvas);
+        this.doomEngine.initialize();
+
+        // Remove any rogue DOOM canvases from the DOM (created by the engine)
+        const allCanvases = document.querySelectorAll('canvas');
+        allCanvases.forEach(canvas => {
+            if (canvas !== this.crtEffect.canvas && canvas !== this.doomCanvas && canvas.parentElement) {
+                canvas.parentElement.removeChild(canvas);
+            }
+        });
+    }
+
     startDoom() {
         if (this.isActive) {
             console.log('DOOM is already running.');
             return;
         }
-        // Ensure `this` is correct for the Module object callbacks
-        const self = this; // Capture the correct 'this'
 
         console.log('Starting DOOM...');
-        this.isActive = true; // Set active at the beginning of start process
+        this.isActive = true;
 
         // Create canvas for DOOM
         this.doomCanvas = document.createElement('canvas');
-        this.doomCanvas.id = 'canvas'; // Keep ID as 'canvas'
-        this.doomCanvas.width = 800; // Intrinsic width
-        this.doomCanvas.height = 600; // Intrinsic height
-        
-        // Position off-screen for Emscripten, CRTEffect will use it as a source
+        this.doomCanvas.id = 'canvas';
+        this.doomCanvas.width = 800;
+        this.doomCanvas.height = 600;
         this.doomCanvas.style.position = 'absolute';
         this.doomCanvas.style.left = '-9999px';
         this.doomCanvas.style.top = '-9999px';
-        // this.doomCanvas.style.visibility = 'hidden'; // Alternative to off-screen positioning
 
         if (this.terminalWrapper) {
             this.terminalWrapper.appendChild(this.doomCanvas);
             console.log('DOOM canvas (id=canvas) appended to terminalWrapper and positioned off-screen');
         } else {
             console.error('Cannot append DOOM canvas, terminalWrapper is null in DoomModule');
-            // Fallback to body if terminalWrapper isn't available, though this is not ideal
-            // document.body.appendChild(this.doomCanvas);
-            // console.warn('DOOM canvas appended to body as fallback and hidden');
         }
-        
-        // CSS will control display size if needed, but CRTEffect will use intrinsic
-        
-        // Hide terminal elements and show DOOM canvas
-        // The main terminal canvas used by CRTEffect will display DOOM
-        // So, we don't append this doomCanvas directly to the body,
-        // but CRTEffect will use it as a source.
 
-        // Make the terminal wrapper aware that a game is active
-        this.terminalWrapper.classList.add('game-mode');
+        // Debug: Append DOOM canvas temporarily to verify content
+        this.doomCanvas.style.position = 'relative';
+        this.doomCanvas.style.left = '0';
+        this.doomCanvas.style.top = '0';
+        this.doomCanvas.style.zIndex = '9999';
+        document.body.appendChild(this.doomCanvas);
 
-        // Signal TerminalRenderer to use the DOOM canvas
-        if (this.terminalRenderer) {
-            this.terminalRenderer.setActiveGameCanvas(this.doomCanvas);
-        }        // Configure DOOM (Emscripten Module object)
+        // Signal CRT effect to use the DOOM canvas
+        if (this.crtEffect) {
+            console.log('Setting DOOM canvas as source for CRT effect.');
+            this.crtEffect.setSourceCanvas(this.doomCanvas);
+        }
+
+        // Configure DOOM (Emscripten Module object)
         window.Module = {
-            canvas: this.doomCanvas, // Emscripten will use this
+            canvas: this.doomCanvas,
             locateFile: (path) => `src/modules/doom/${path}`,
             arguments: ['-nofullscreen', '-width', '800', '-height', '600'],
             onRuntimeInitialized: () => {
-                console.log('DOOM Runtime Initialized. doomCanvas dimensions:', self.doomCanvas.width, 'x', self.doomCanvas.height);
-                if (window.Module && window.Module.canvas && window.Module.canvas.id === 'canvas') {
-                    console.log('DOOM Module.canvas is correctly self.doomCanvas');
-                } else {
-                    console.warn('DOOM Module.canvas is NOT self.doomCanvas or does not exist. Current Module.canvas:', window.Module ? window.Module.canvas : 'Module undefined');
-                }
-                
-                if (self.terminalRenderer && self.terminalRenderer.crtEffect) {
-                    self.terminalRenderer.crtEffect.resizeCanvas(); 
+                console.log('DOOM Runtime Initialized.');
+                if (this.crtEffect) {
+                    console.log('Resizing CRT effect for DOOM canvas.');
+                    this.crtEffect.resizeCanvas();
                 }
             },
-            gameHasExited: function(status) {
-                console.log('**************************************************');
-                console.log('****** gameHasExited CALLED! Status:', status, '******');
-                console.log('**************************************************');
-                // Call our stopDoom function to reset the terminal view
-                self.stopDoom();
+            gameHasExited: (status) => {
+                console.log('DOOM exited with status:', status);
+                this.stopDoom();
             },
             print: (text) => { console.log('DOOM stdout:', text); },
             printErr: (text) => { console.error('DOOM stderr:', text); }
@@ -136,6 +144,12 @@ class DoomModule {
             console.log('DoomModule.stopDoom(): window.Module nulled.');
         } else {
             console.warn("DoomModule.stopDoom(): window.Module was already undefined.");
+        }
+
+        // Reset CRT effect to use the terminal canvas
+        if (this.crtEffect) {
+            console.log('Resetting CRT effect to use terminal canvas.');
+            this.crtEffect.setSourceCanvas(this.terminalRenderer.getCanvas());
         }
 
         // Signal TerminalRenderer to stop using the DOOM canvas

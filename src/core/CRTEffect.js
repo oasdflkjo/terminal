@@ -115,6 +115,29 @@ class CRTEffect {
         this.initBuffers();
         this.createTexture();
         
+        // Create a framebuffer and texture for rendering
+        this.framebuffer = this.gl.createFramebuffer();
+        this.renderTexture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.renderTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, canvas.width, canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.renderTexture, 0);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+        // Create a composite canvas for unified rendering
+        this.compositeCanvas = document.createElement('canvas');
+        this.compositeCanvas.width = canvas.width;
+        this.compositeCanvas.height = canvas.height;
+        this.compositeContext = this.compositeCanvas.getContext('2d');
+
+        // Default source is the composite canvas
+        this.sourceCanvas = this.compositeCanvas;
+
         // Start in CRT mode
         const wrapper = document.querySelector('.terminal-wrapper');
         wrapper.classList.add('crt-mode');
@@ -268,51 +291,107 @@ class CRTEffect {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
     }
 
+    setSourceCanvas(canvas) {
+        // Dynamically switch the source canvas (e.g., terminal or DOOM)
+        this.sourceCanvas = canvas;
+        if (canvas) {
+            console.log('Source canvas set for CRT effect:', canvas.id);
+            this.resizeCanvasToMatchSource(canvas);
+        }
+    }
+
+    setDoomCanvas(doomCanvas) {
+        this.doomCanvas = doomCanvas;
+        // Remove from DOM if present
+        if (doomCanvas && doomCanvas.parentElement) {
+            doomCanvas.parentElement.removeChild(doomCanvas);
+        }
+    }
+
+    resizeCanvasToMatchSource(sourceCanvas) {
+        if (!sourceCanvas) return;
+
+        const newCanvasWidth = sourceCanvas.width * window.devicePixelRatio;
+        const newCanvasHeight = sourceCanvas.height * window.devicePixelRatio;
+
+        if (this.canvas.width !== newCanvasWidth || this.canvas.height !== newCanvasHeight) {
+            this.canvas.width = newCanvasWidth;
+            this.canvas.height = newCanvasHeight;
+
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.renderTexture);
+            this.gl.texImage2D(
+                this.gl.TEXTURE_2D,
+                0,
+                this.gl.RGBA,
+                newCanvasWidth,
+                newCanvasHeight,
+                0,
+                this.gl.RGBA,
+                this.gl.UNSIGNED_BYTE,
+                null
+            );
+
+            this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            console.log('CRT effect resized to match source canvas dimensions:', newCanvasWidth, 'x', newCanvasHeight);
+        }
+    }
+
     updateTexture() {
-        if (!this.terminalRenderer) return Promise.resolve();
-        
-        const sourceCanvas = this.terminalRenderer.getCanvas(); 
-        //console.log('CRTEffect.updateTexture() using sourceCanvas:', sourceCanvas ? (sourceCanvas.id || 'source_canvas_no_id') : 'null_source_canvas', 'W:', sourceCanvas ? sourceCanvas.width : 'N/A', 'H:', sourceCanvas ? sourceCanvas.height : 'N/A');
+        if (!this.sourceCanvas) return Promise.resolve();
 
-        if (!sourceCanvas) {
-            // console.warn('CRTEffect: Source canvas for texture is null or undefined.');
-            return Promise.resolve(); 
-        }
-        if (sourceCanvas.width === 0 || sourceCanvas.height === 0) {
-            // console.warn(`CRTEffect: Source canvas for texture has zero dimensions (width: ${sourceCanvas.width}, height: ${sourceCanvas.height}). Source:`, sourceCanvas.id);
-            return Promise.resolve(); 
-        }
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.renderTexture);
 
-        // Bind the texture
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
-        
         try {
-            // Copy the terminal canvas content to the WebGL texture
             this.gl.texImage2D(
                 this.gl.TEXTURE_2D,
                 0,
                 this.gl.RGBA,
                 this.gl.RGBA,
                 this.gl.UNSIGNED_BYTE,
-                sourceCanvas // Use the sourceCanvas (could be terminal or game)
+                this.sourceCanvas
             );
+            console.log('Texture updated from source canvas:', this.sourceCanvas.id);
         } catch (error) {
             console.error('Error updating texture:', error);
         }
-        return Promise.resolve(); // Ensure a promise is returned
-    }    async render() {
-        if (!this.CRT_ENABLED || !this.isEnabled) return;
-        
-        // Always update texture for smooth rendering
-        await this.updateTexture();
-        
-        const sourceCanvas = this.terminalRenderer.getCanvas();
-        if (!sourceCanvas || sourceCanvas.width === 0 || sourceCanvas.height === 0) {
-            if (this.isEnabled) {
-                this.animationFrame = requestAnimationFrame(() => this.render());
-            }
-            return;
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        return Promise.resolve();
+    }
+
+    renderComposite() {
+        // Clear the composite canvas
+        this.compositeContext.clearRect(0, 0, this.compositeCanvas.width, this.compositeCanvas.height);
+
+        // Draw terminal content
+        const terminalCanvas = this.terminalRenderer.getCanvas();
+        if (terminalCanvas) {
+            this.compositeContext.drawImage(terminalCanvas, 0, 0);
         }
+
+        // Draw DOOM content if available (offscreen only)
+        if (this.doomCanvas) {
+            this.compositeContext.drawImage(this.doomCanvas, 0, 0);
+        }
+
+        // Ensure DOOM canvas is hidden from the DOM
+        if (this.doomCanvas && this.doomCanvas.parentElement) {
+            this.doomCanvas.style.display = 'none';
+        }
+
+        // Add other site elements as needed
+        // Example: Draw additional overlays or UI components
+    }
+
+    async render() {
+        if (!this.CRT_ENABLED || !this.isEnabled) return;
+
+        // Render all elements to the composite canvas
+        this.renderComposite();
+
+        // Update the texture from the composite canvas
+        await this.updateTexture();
 
         if (!this.gl || !this.program) {
             console.error('WebGL context or shader program not initialized for CRTEffect.');
@@ -339,7 +418,7 @@ class CRTEffect {
         this.gl.useProgram(this.program);
         
         this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.renderTexture);
         const samplerLocation = this.gl.getUniformLocation(this.program, 'uSampler');
         if (samplerLocation !== null) {
             this.gl.uniform1i(samplerLocation, 0);
@@ -353,5 +432,5 @@ class CRTEffect {
         if (this.isEnabled) {
             this.animationFrame = requestAnimationFrame(() => this.render());
         }
-    }    // Remove the forceTextureUpdate method since we're always updating
+    }
 }
