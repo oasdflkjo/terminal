@@ -273,6 +273,8 @@ class CRTEffect {
         if (!this.terminalRenderer) return Promise.resolve();
         
         const sourceCanvas = this.terminalRenderer.getCanvas(); 
+        //console.log('CRTEffect.updateTexture() using sourceCanvas:', sourceCanvas ? (sourceCanvas.id || 'source_canvas_no_id') : 'null_source_canvas', 'W:', sourceCanvas ? sourceCanvas.width : 'N/A', 'H:', sourceCanvas ? sourceCanvas.height : 'N/A');
+
         if (!sourceCanvas) {
             // console.warn('CRTEffect: Source canvas for texture is null or undefined.');
             return Promise.resolve(); 

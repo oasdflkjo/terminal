@@ -153,6 +153,27 @@ class TerminalModule {
         this.terminal.cursorY = 0;
     }
 
+    resetToInitState() {
+        console.log('TerminalModule: Resetting to init state');
+        // Clear terminal screen
+        this.clearScreen();
+        
+        // Reset terminal module state
+        this.currentLine = '';
+        this.historyIndex = null;
+        
+        // Re-display welcome message and prompt
+        this.displayWelcomeMessage();
+        
+        // Ensure terminal module is active
+        this.active = true;
+        
+        // Make sure input is focused
+        if (this.moduleManager && this.moduleManager.input) {
+            this.moduleManager.input.focus();
+        }
+    }
+
     displayPrompt() {
         for (const char of this.prompt) {
             this.terminal.writeCharacter(char);

@@ -1,8 +1,9 @@
 // filepath: c/projects/terminal/src/modules/doom/DoomModule.js
 class DoomModule {
-    constructor(terminalWrapper, terminalRenderer) {
+    constructor(terminalWrapper, terminalRenderer, moduleManager) {
         this.terminalWrapper = terminalWrapper;
         this.terminalRenderer = terminalRenderer;
+        this.moduleManager = moduleManager;
         this.doomCanvas = null;
         this.doomScript = null;
         this.isActive = false;
@@ -24,8 +25,11 @@ class DoomModule {
             console.log('DOOM is already running.');
             return;
         }
-        this.isActive = true;
+        // Ensure `this` is correct for the Module object callbacks
+        const self = this; // Capture the correct 'this'
+
         console.log('Starting DOOM...');
+        this.isActive = true; // Set active at the beginning of start process
 
         // Create canvas for DOOM
         this.doomCanvas = document.createElement('canvas');
@@ -62,40 +66,32 @@ class DoomModule {
         // Signal TerminalRenderer to use the DOOM canvas
         if (this.terminalRenderer) {
             this.terminalRenderer.setActiveGameCanvas(this.doomCanvas);
-        }
-
-        // Configure DOOM (Emscripten Module object)
+        }        // Configure DOOM (Emscripten Module object)
         window.Module = {
-            canvas: this.doomCanvas,
-            locateFile: (path) => {
-                // Files are in src/modules/doom/
-                return `src/modules/doom/${path}`;
-            },
+            canvas: this.doomCanvas, // Emscripten will use this
+            locateFile: (path) => `src/modules/doom/${path}`,
             arguments: ['-nofullscreen', '-width', '800', '-height', '600'],
             onRuntimeInitialized: () => {
-                console.log('DOOM Runtime Initialized');
-                // Ensure Module.canvas is the one we expect, especially if Emscripten found one by ID
+                console.log('DOOM Runtime Initialized. doomCanvas dimensions:', self.doomCanvas.width, 'x', self.doomCanvas.height);
                 if (window.Module && window.Module.canvas && window.Module.canvas.id === 'canvas') {
-                    console.log('DOOM Module.canvas is correctly our canvas#canvas');
-                    window.Module.canvas.focus();
+                    console.log('DOOM Module.canvas is correctly self.doomCanvas');
                 } else {
-                    console.warn('DOOM Module.canvas is NOT our canvas#canvas or does not exist. Current Module.canvas:', window.Module ? window.Module.canvas : 'Module undefined');
+                    console.warn('DOOM Module.canvas is NOT self.doomCanvas or does not exist. Current Module.canvas:', window.Module ? window.Module.canvas : 'Module undefined');
                 }
                 
-                if (this.terminalRenderer && this.terminalRenderer.crtEffect) {
-                    this.terminalRenderer.crtEffect.resizeCanvas(); 
+                if (self.terminalRenderer && self.terminalRenderer.crtEffect) {
+                    self.terminalRenderer.crtEffect.resizeCanvas(); 
                 }
             },
-            print: (text) => {
-                console.log('DOOM stdout:', text);
+            gameHasExited: function(status) {
+                console.log('**************************************************');
+                console.log('****** gameHasExited CALLED! Status:', status, '******');
+                console.log('**************************************************');
+                // Call our stopDoom function to reset the terminal view
+                self.stopDoom();
             },
-            printErr: (text) => {
-                console.error('DOOM stderr:', text);
-            },
-            quit: (status, error) => {
-                console.log('DOOM quit with status:', status, 'Error:', error);
-                this.stopDoom();
-            }
+            print: (text) => { console.log('DOOM stdout:', text); },
+            printErr: (text) => { console.error('DOOM stderr:', text); }
         };
 
         // Load chocolate-doom.js
@@ -108,52 +104,81 @@ class DoomModule {
     }
 
     stopDoom() {
-        if (!this.isActive) {
-            return;
-        }
-        this.isActive = false;
-        console.log('Stopping DOOM...');
+        // Log entry point and current isActive state
+        console.log(`>>> stopDoom called. Current isActive state: ${this.isActive} <<<`);
+        
+        console.log('>>> Stopping DOOM... (Inside stopDoom method START) <<<');
+        this.isActive = false; // Ensure isActive is set to false
 
-        if (this.doomCanvas && this.doomCanvas.parentElement) {
-            this.doomCanvas.parentElement.removeChild(this.doomCanvas);
-            console.log('DOOM canvas (id=canvas) removed from its parent');
-        }
-
-        if (window.Module && typeof window.Module.exit === 'function') {
-            // Attempt a graceful exit if available, though Emscripten might not always provide/need this
-            // For chocolate-doom, it might handle its own cleanup on quit.
+        if (this.doomCanvas) {
+            if (this.doomCanvas.parentElement) {
+                this.doomCanvas.parentElement.removeChild(this.doomCanvas);
+                console.log('DOOM canvas (id=canvas) removed from its parent');
+            }
+            this.doomCanvas = null; 
+            console.log('DoomModule.stopDoom(): this.doomCanvas set to null');
+        } else {
+            console.warn('DoomModule.stopDoom(): this.doomCanvas was already null.');
         }
         
-        // Clean up
-        if (this.doomScript && this.doomScript.parentNode) {
-            this.doomScript.parentNode.removeChild(this.doomScript);
+        // Clean up the Emscripten script tag
+        if (this.doomScript) {
+            if (this.doomScript.parentNode) {
+                this.doomScript.parentNode.removeChild(this.doomScript);
+            }
+            this.doomScript = null;
+            console.log('DoomModule.stopDoom(): DOOM script tag removed and nulled.');
         }
-        this.doomScript = null;
 
-        // No need to remove this.doomCanvas from DOM if it wasn't added directly
-        // CRTEffect will stop using it.
-        this.doomCanvas = null; 
-        
-        window.Module = undefined; // Clear the global Module object
+        // Clear the global Module object 
+        if (window.Module) {
+            window.Module = undefined;
+            console.log('DoomModule.stopDoom(): window.Module nulled.');
+        } else {
+            console.warn("DoomModule.stopDoom(): window.Module was already undefined.");
+        }
 
         // Signal TerminalRenderer to stop using the DOOM canvas
         if (this.terminalRenderer) {
-            this.terminalRenderer.setActiveGameCanvas(null);
-        }
-        
-        this.terminalWrapper.classList.remove('game-mode');
-        
-        // Give focus back to the terminal input if it exists
-        const terminalInput = this.terminalWrapper.querySelector('.terminal-input');
-        if (terminalInput) {
-            terminalInput.focus();
-        }
+            this.terminalRenderer.setActiveGameCanvas(null); // CRITICAL STEP
+            console.log('DoomModule.stopDoom(): Called setActiveGameCanvas(null)');
+            
+            if (this.terminalRenderer.virtualTerminal && typeof this.terminalRenderer.render === 'function') {
+                console.log('DoomModule.stopDoom(): Forcing TerminalRenderer.render() to refresh terminal content');
+                this.terminalRenderer.render(); // Force redraw of terminal content
+            }
 
-        // Trigger a resize/render for CRTEffect to switch back to terminal content
-        if (this.terminalRenderer && this.terminalRenderer.crtEffect) {
-            this.terminalRenderer.crtEffect.resizeCanvas();
+            if (this.terminalRenderer.crtEffect && this.terminalRenderer.crtEffect.isEnabled) {
+                console.log('DoomModule.stopDoom(): Requesting CRTEffect resize/redraw');
+                this.terminalRenderer.crtEffect.resizeCanvas(); 
+            }
+        } else {
+            console.error('DoomModule.stopDoom(): this.terminalRenderer is null! Cannot reset renderer state.');
         }
-        console.log('DOOM stopped.');
+        
+        if (this.terminalWrapper) {
+            this.terminalWrapper.classList.remove('game-mode');
+            console.log('DoomModule.stopDoom(): game-mode class removed from terminalWrapper.');
+
+            const terminalInput = this.terminalWrapper.querySelector('.terminal-input');
+            if (terminalInput && typeof terminalInput.focus === 'function') {
+                console.log('DoomModule.stopDoom(): Focusing terminal input.');
+                terminalInput.focus();
+            }
+
+            // Reset terminal to init state
+            const terminalModule = this.moduleManager ? this.moduleManager.getModule('terminal') : null;
+            if (terminalModule && typeof terminalModule.resetToInitState === 'function') {
+                console.log('DoomModule.stopDoom(): Resetting terminal to init state.');
+                terminalModule.resetToInitState();
+            } else {
+                console.warn('DoomModule.stopDoom(): Could not find terminal module or resetToInitState method.');
+            }
+        } else {
+            console.error('DoomModule.stopDoom(): this.terminalWrapper is null! Cannot remove game-mode or focus input.');
+        }
+        
+        console.log('>>> DOOM stopped. (Inside stopDoom method END) <<<');
     }
 
     getCanvas() {

@@ -7,6 +7,7 @@ class TerminalRenderer {
         
         // Create virtual canvas for rendering
         this.canvas = document.createElement('canvas');
+        this.canvas.id = 'terminal-render-canvas'; // Assign a specific ID
         this.context = this.canvas.getContext('2d');
         
         // Calculate DPI scale
@@ -180,7 +181,11 @@ class TerminalRenderer {
 
     setActiveGameCanvas(gameCanvas) {
         this.activeGameCanvas = gameCanvas;
-        console.log('Active game canvas set to:', gameCanvas);
+        if (gameCanvas) {
+            console.log('TerminalRenderer: setActiveGameCanvas called. New activeGameCanvas:', gameCanvas.id, 'Dimensions:', gameCanvas.width, 'x', gameCanvas.height);
+        } else {
+            console.log('TerminalRenderer: setActiveGameCanvas called. New activeGameCanvas: null');
+        }
         // If CRTEffect is active, it might need to know about this change
         if (this.crtEffect && this.crtEffect.isEnabled) {
             // The CRTEffect's render loop will pick this up via getCanvas()
@@ -191,9 +196,11 @@ class TerminalRenderer {
     getCanvas() {
         // If a game is active and has a canvas, CRTEffect should use that.
         if (this.activeGameCanvas) {
+           // console.log('TerminalRenderer.getCanvas() returning activeGameCanvas:', this.activeGameCanvas.id || this.activeGameCanvas);
             return this.activeGameCanvas;
         }
         // Otherwise, use the main terminal canvas.
+        //console.log('TerminalRenderer.getCanvas() returning main terminal canvas (this.canvas). ID:', this.canvas.id || 'terminal_canvas_no_id');
         return this.canvas;
     }
 }

@@ -8,11 +8,9 @@ class ModuleManager {
         if (!this.terminalWrapper) {
             console.error('Critical: Terminal wrapper element with class .terminal-wrapper not found in the DOM. UI functionalities like game mode switching will fail.');
             // Depending on desired behavior, could throw error or allow modules to handle a null wrapper.
-        }
-
-        this.modules = new Map(); // Initialize as a Map
-        // Pass the queried terminalWrapper to DoomModule
-        this.modules.set('doom', new DoomModule(this.terminalWrapper, virtualTerminal.renderer)); // Add doom module
+        }        this.modules = new Map(); // Initialize as a Map
+        // Pass the queried terminalWrapper, renderer, and moduleManager to DoomModule
+        this.modules.set('doom', new DoomModule(this.terminalWrapper, virtualTerminal.renderer, this)); // Add doom module
         this.activeModule = null;
         this.input = document.getElementById('terminal-input');
     }
