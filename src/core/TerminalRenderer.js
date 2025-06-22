@@ -165,13 +165,10 @@ class TerminalRenderer {
                 }
             }
         }
-        
-        // Update screen
+          // Update screen
         this.element.innerHTML = '';
         this.element.appendChild(this.canvas);
-    }
-
-    startRenderLoop() {
+    }startRenderLoop() {
         const loop = () => {
             this.render();
             requestAnimationFrame(loop);

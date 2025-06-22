@@ -7,7 +7,7 @@ class CRTEffect {
         
         console.log('CRTEffect constructor', { canvas, terminalRenderer });
         this.canvas = canvas;
-        this.terminalRenderer = terminalRenderer;
+        this.terminalRenderer = terminalRenderer;        // No texture update throttling for smooth rendering
         
         // Initial setup
         this.resizeCanvas();
@@ -33,13 +33,12 @@ class CRTEffect {
                 gl_Position = vec4(aVertexPosition, 0.0, 1.0);
                 vTextureCoord = aTextureCoord;
             }
-        `;
-
+        `;        // Original enhanced fragment shader for smooth effects
         this.fragmentShaderSource = `
             precision mediump float;
             varying vec2 vTextureCoord;
             uniform sampler2D uSampler;
-            uniform float uTime; // Keep uTime if any basic animation/effect relies on it, otherwise can remove
+            uniform float uTime;
             
             // Add noise function
             float rand(vec2 co) {
@@ -118,7 +117,7 @@ class CRTEffect {
         
         // Start in CRT mode
         const wrapper = document.querySelector('.terminal-wrapper');
-        wrapper.classList.add('crt-mode');  // Add CRT mode class immediately
+        wrapper.classList.add('crt-mode');
         
         // Start the effect after initialization
         requestAnimationFrame(() => {
@@ -301,11 +300,10 @@ class CRTEffect {
             console.error('Error updating texture:', error);
         }
         return Promise.resolve(); // Ensure a promise is returned
-    }
-
-    async render() {
+    }    async render() {
         if (!this.CRT_ENABLED || !this.isEnabled) return;
         
+        // Always update texture for smooth rendering
         await this.updateTexture();
         
         const sourceCanvas = this.terminalRenderer.getCanvas();
@@ -340,14 +338,11 @@ class CRTEffect {
 
         this.gl.useProgram(this.program);
         
-        // Explicitly activate texture unit 0, bind the texture, and set the sampler uniform
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
         const samplerLocation = this.gl.getUniformLocation(this.program, 'uSampler');
         if (samplerLocation !== null) {
-            this.gl.uniform1i(samplerLocation, 0); // Tell uSampler to use texture unit 0
-        } else {
-            // console.warn("CRTEffect: uSampler uniform not found in shader program.");
+            this.gl.uniform1i(samplerLocation, 0);
         }
         
         const timeLocation = this.gl.getUniformLocation(this.program, 'uTime');
@@ -358,5 +353,5 @@ class CRTEffect {
         if (this.isEnabled) {
             this.animationFrame = requestAnimationFrame(() => this.render());
         }
-    }
+    }    // Remove the forceTextureUpdate method since we're always updating
 }
