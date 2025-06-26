@@ -129,6 +129,7 @@ class TerminalModule {
             '  echo    - Display the specified text',
             '  whois   - Display information about the developer',
             '  snake   - Play a game of Snake',
+            '  doom    - DOOM!',
             ''
         ].join('\n');
         
@@ -231,8 +232,7 @@ class TerminalModule {
                 break;
             case 'snake':
                 this.moduleManager.activateModule('snake');
-                break;
-            case 'doom':
+                break;            case 'doom':
                 const doomModule = this.moduleManager.getModule('doom');
                 if (doomModule) {
                     if (args[0] === 'stop') {
@@ -240,7 +240,11 @@ class TerminalModule {
                         this.writeOutput('DOOM module stopped.');
                     } else {
                         this.writeOutput('Starting DOOM...');
-                        doomModule.startDoom();
+                        // Handle async startDoom method
+                        doomModule.startDoom().catch(error => {
+                            console.error('Error starting DOOM:', error);
+                            this.writeOutput('Error starting DOOM: ' + error.message);
+                        });
                     }
                 } else {
                     this.writeOutput('Error: DOOM module not found.');
