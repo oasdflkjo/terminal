@@ -129,7 +129,7 @@ class TerminalModule {
             '  echo    - Display the specified text',
             '  whois   - Display information about the developer',
             '  snake   - Play a game of Snake',
-            '  fdoom    - FREEDOOM!',
+            '  fdoom   - FREEDOOM!',
             ''
         ].join('\n');
         
