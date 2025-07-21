@@ -129,6 +129,7 @@ class TerminalModule {
             '  echo    - Display the specified text',
             '  whois   - Display information about the developer',
             '  snake   - Play a game of Snake',
+            '  doom    - DOOM!',
             ''
         ].join('\n');
         
@@ -151,6 +152,27 @@ class TerminalModule {
         this.terminal.initializeBuffer();
         this.terminal.cursorX = 0;
         this.terminal.cursorY = 0;
+    }
+
+    resetToInitState() {
+        console.log('TerminalModule: Resetting to init state');
+        // Clear terminal screen
+        this.clearScreen();
+        
+        // Reset terminal module state
+        this.currentLine = '';
+        this.historyIndex = null;
+        
+        // Re-display welcome message and prompt
+        this.displayWelcomeMessage();
+        
+        // Ensure terminal module is active
+        this.active = true;
+        
+        // Make sure input is focused
+        if (this.moduleManager && this.moduleManager.input) {
+            this.moduleManager.input.focus();
+        }
     }
 
     displayPrompt() {
@@ -210,6 +232,23 @@ class TerminalModule {
                 break;
             case 'snake':
                 this.moduleManager.activateModule('snake');
+                break;            case 'doom':
+                const doomModule = this.moduleManager.getModule('doom');
+                if (doomModule) {
+                    if (args[0] === 'stop') {
+                        doomModule.stopDoom();
+                        this.writeOutput('DOOM module stopped.');
+                    } else {
+                        this.writeOutput('Starting DOOM...');
+                        // Handle async startDoom method
+                        doomModule.startDoom().catch(error => {
+                            console.error('Error starting DOOM:', error);
+                            this.writeOutput('Error starting DOOM: ' + error.message);
+                        });
+                    }
+                } else {
+                    this.writeOutput('Error: DOOM module not found.');
+                }
                 break;
             default:
                 this.writeOutput(`Command not found: ${cmd}\n`);
@@ -217,4 +256,4 @@ class TerminalModule {
     }
 }
 
-export default TerminalModule; 
+export default TerminalModule;

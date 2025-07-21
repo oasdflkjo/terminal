@@ -7,7 +7,7 @@ class CRTEffect {
         
         console.log('CRTEffect constructor', { canvas, terminalRenderer });
         this.canvas = canvas;
-        this.terminalRenderer = terminalRenderer;
+        this.terminalRenderer = terminalRenderer;        // No texture update throttling for smooth rendering
         
         // Initial setup
         this.resizeCanvas();
@@ -33,8 +33,7 @@ class CRTEffect {
                 gl_Position = vec4(aVertexPosition, 0.0, 1.0);
                 vTextureCoord = aTextureCoord;
             }
-        `;
-
+        `;        // Original enhanced fragment shader for smooth effects
         this.fragmentShaderSource = `
             precision mediump float;
             varying vec2 vTextureCoord;
@@ -118,7 +117,7 @@ class CRTEffect {
         
         // Start in CRT mode
         const wrapper = document.querySelector('.terminal-wrapper');
-        wrapper.classList.add('crt-mode');  // Add CRT mode class immediately
+        wrapper.classList.add('crt-mode');
         
         // Start the effect after initialization
         requestAnimationFrame(() => {
@@ -129,20 +128,41 @@ class CRTEffect {
 
     resizeCanvas() {
         if (!this.CRT_ENABLED) return;
-        // Get the actual terminal container size
+
         const terminalContainer = document.querySelector('.terminal-container');
-        const containerRect = terminalContainer.getBoundingClientRect();
-        
-        // Set canvas element size (what's visible on screen)
+        let containerRect;
+
+        if (terminalContainer) {
+            containerRect = terminalContainer.getBoundingClientRect();
+        } else {
+            console.error('CRTEffect: .terminal-container not found. Falling back to canvas parentElement for sizing.');
+            const parentElement = this.canvas.parentElement;
+            if (!parentElement) {
+                console.error('CRTEffect: Canvas has no parent element AND .terminal-container not found. Cannot resize.');
+                return;
+            }
+            containerRect = parentElement.getBoundingClientRect();
+        }
+
+        if (containerRect.width === 0 || containerRect.height === 0) {
+            console.warn('CRTEffect: Reference container for sizing has zero width or height. CRT canvas might be hidden or incorrectly sized.');
+            // Avoid setting canvas style to 0x0 directly, but internal buffer needs minimum.
+        }
+
+        // Set canvas element display size (CSS pixels)
         this.canvas.style.width = `${containerRect.width}px`;
         this.canvas.style.height = `${containerRect.height}px`;
-        
-        // Set internal buffer size with fixed 1.25x multiplier
-        
-        this.canvas.width = containerRect.width * window.devicePixelRatio;
-        this.canvas.height = containerRect.height * window.devicePixelRatio;
-        
-        // Update WebGL viewport if context exists
+
+        // Set internal buffer size (drawing buffer in device pixels)
+        const newCanvasWidth = Math.max(1, containerRect.width * window.devicePixelRatio);
+        const newCanvasHeight = Math.max(1, containerRect.height * window.devicePixelRatio);
+
+        if (this.canvas.width !== newCanvasWidth || this.canvas.height !== newCanvasHeight) {
+            this.canvas.width = newCanvasWidth;
+            this.canvas.height = newCanvasHeight;
+            // console.log(`CRTEffect: Resized WebGL canvas to ${this.canvas.width}x${this.canvas.height} (style: ${this.canvas.style.width}x${this.canvas.style.height}) based on .terminal-container or fallback.`);
+        }
+
         if (this.gl) {
             this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         }
@@ -153,7 +173,7 @@ class CRTEffect {
         const wrapper = document.querySelector('.terminal-wrapper');
         const toggleBtn = document.querySelector('.crt-toggle');
         
-        if (this.isEnabled) {
+        if (this.isEnabled) { // Corrected syntax error here
             wrapper.classList.add('crt-mode');
             toggleBtn.textContent = 'Disable CRT Mode';
             this.resizeCanvas();
@@ -249,10 +269,19 @@ class CRTEffect {
     }
 
     updateTexture() {
-        if (!this.terminalRenderer) return;
+        if (!this.terminalRenderer) return Promise.resolve();
         
-        const terminalCanvas = this.terminalRenderer.getCanvas();
-        if (!terminalCanvas) return;
+        const sourceCanvas = this.terminalRenderer.getCanvas(); 
+        //console.log('CRTEffect.updateTexture() using sourceCanvas:', sourceCanvas ? (sourceCanvas.id || 'source_canvas_no_id') : 'null_source_canvas', 'W:', sourceCanvas ? sourceCanvas.width : 'N/A', 'H:', sourceCanvas ? sourceCanvas.height : 'N/A');
+
+        if (!sourceCanvas) {
+            // console.warn('CRTEffect: Source canvas for texture is null or undefined.');
+            return Promise.resolve(); 
+        }
+        if (sourceCanvas.width === 0 || sourceCanvas.height === 0) {
+            // console.warn(`CRTEffect: Source canvas for texture has zero dimensions (width: ${sourceCanvas.width}, height: ${sourceCanvas.height}). Source:`, sourceCanvas.id);
+            return Promise.resolve(); 
+        }
 
         // Bind the texture
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
@@ -265,53 +294,64 @@ class CRTEffect {
                 this.gl.RGBA,
                 this.gl.RGBA,
                 this.gl.UNSIGNED_BYTE,
-                terminalCanvas
+                sourceCanvas // Use the sourceCanvas (could be terminal or game)
             );
         } catch (error) {
             console.error('Error updating texture:', error);
         }
-    }
-
-    async render() {
-        if (!this.CRT_ENABLED) return;
-        console.log('Rendering CRT effect');
-        // Wait for texture update to complete
+        return Promise.resolve(); // Ensure a promise is returned
+    }    async render() {
+        if (!this.CRT_ENABLED || !this.isEnabled) return;
+        
+        // Always update texture for smooth rendering
         await this.updateTexture();
         
-        // Clear canvas
+        const sourceCanvas = this.terminalRenderer.getCanvas();
+        if (!sourceCanvas || sourceCanvas.width === 0 || sourceCanvas.height === 0) {
+            if (this.isEnabled) {
+                this.animationFrame = requestAnimationFrame(() => this.render());
+            }
+            return;
+        }
+
+        if (!this.gl || !this.program) {
+            console.error('WebGL context or shader program not initialized for CRTEffect.');
+            this.stop();
+            return;
+        }
+
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-        // Set viewport
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
-        // Set up attribute locations
         const positionLocation = this.gl.getAttribLocation(this.program, 'aVertexPosition');
         const texcoordLocation = this.gl.getAttribLocation(this.program, 'aTextureCoord');
 
-        // Set up position attribute
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        // Set up texture coordinate attribute
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
         this.gl.enableVertexAttribArray(texcoordLocation);
         this.gl.vertexAttribPointer(texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        // Use shader program
         this.gl.useProgram(this.program);
         
-        // Update time uniform for animation effects
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+        const samplerLocation = this.gl.getUniformLocation(this.program, 'uSampler');
+        if (samplerLocation !== null) {
+            this.gl.uniform1i(samplerLocation, 0);
+        }
+        
         const timeLocation = this.gl.getUniformLocation(this.program, 'uTime');
         this.gl.uniform1f(timeLocation, performance.now() / 1000.0);
 
-        // Draw
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
 
-        // Request next frame only if enabled
         if (this.isEnabled) {
             this.animationFrame = requestAnimationFrame(() => this.render());
         }
-    }
-} 
+    }    // Remove the forceTextureUpdate method since we're always updating
+}
