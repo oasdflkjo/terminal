@@ -232,22 +232,23 @@ class TerminalModule {
                 break;
             case 'snake':
                 this.moduleManager.activateModule('snake');
-                break;            case 'doom':
+                break;            
+            case 'fdoom':
                 const doomModule = this.moduleManager.getModule('doom');
                 if (doomModule) {
                     if (args[0] === 'stop') {
                         doomModule.stopDoom();
-                        this.writeOutput('DOOM module stopped.');
+                        this.writeOutput('FDOOM module stopped.');
                     } else {
-                        this.writeOutput('Starting DOOM...');
+                        this.writeOutput('Starting FDOOM...');
                         // Handle async startDoom method
                         doomModule.startDoom().catch(error => {
-                            console.error('Error starting DOOM:', error);
-                            this.writeOutput('Error starting DOOM: ' + error.message);
+                            console.error('Error starting FDOOM:', error);
+                            this.writeOutput('Error starting FDOOM: ' + error.message);
                         });
                     }
                 } else {
-                    this.writeOutput('Error: DOOM module not found.');
+                    this.writeOutput('Error: FDOOM module not found.');
                 }
                 break;
             default:
