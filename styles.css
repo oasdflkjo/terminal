@@ -1,12 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
 
-@font-face {
-    font-family: 'FiraCode Nerd Font';
-    src: url('./fonts/FiraCodeNerdFontMono-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
 :root {
     --base-font-size: 16px;
     --dpi-scale: 1;  /* Will be calculated dynamically */
@@ -87,7 +80,7 @@ body {
 #terminal-screen {
     position: relative;
     background: var(--terminal-bg);
-    font-family: 'Cascadia Mono', 'FiraCode Nerd Font', monospace;
+    font-family: 'Fira Code', 'FiraCode Nerd Font', 'Cascadia Mono', monospace;
     font-size: var(--terminal-font-size);
     line-height: var(--char-height);
     white-space: pre;
@@ -133,7 +126,7 @@ body {
 }
 
 .terminal {
-    font-family: 'Cascadia Mono', 'Courier New', monospace;
+    font-family: 'Fira Code', 'Cascadia Mono', 'Courier New', monospace;
 }
 
 .crt-toggle {
@@ -145,7 +138,7 @@ body {
     color: #000000;
     border: none;
     cursor: pointer;
-    font-family: 'FiraCode Nerd Font', monospace;
+    font-family: 'Fira Code', 'FiraCode Nerd Font', monospace;
     z-index: 3;
 }
 

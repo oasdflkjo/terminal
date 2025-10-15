@@ -9,12 +9,14 @@ class TerminalRenderer {
         this.canvas = document.createElement('canvas');
         this.canvas.id = 'terminal-render-canvas'; // Assign a specific ID
         this.context = this.canvas.getContext('2d');
+        this.primaryFont = '"Fira Code"';
+        this.fontStack = `${this.primaryFont}, "FiraCode Nerd Font", "Cascadia Mono", monospace`;
         
         // Calculate DPI scale
         this.calculateDPIScale();
         
         // Wait for font to load before initializing
-        document.fonts.load(`${this.getFontSize()} "Cascadia Mono"`).then(() => {
+        document.fonts.load(`${this.getFontSize()} ${this.primaryFont}`).then(() => {
             this.initializeRenderer();
         }).catch(() => {
             console.log('Falling back to system monospace');
@@ -53,7 +55,7 @@ class TerminalRenderer {
 
     calculateCharacterDimensions() {
         const span = document.createElement('span');
-        span.style.fontFamily = "'Cascadia Mono', monospace";
+        span.style.fontFamily = this.fontStack;
         span.style.fontSize = this.getFontSize();
         span.style.visibility = 'hidden';
         span.textContent = '#';
@@ -119,7 +121,7 @@ class TerminalRenderer {
         this.context.setTransform(this.dpiScale, 0, 0, this.dpiScale, 0, 0);
         
         // Set text properties
-        this.context.font = `${this.getFontSize()} "Cascadia Mono"`;
+        this.context.font = `${this.getFontSize()} ${this.fontStack}`;
         this.context.textBaseline = 'top';
         this.context.fillStyle = '#33ff33';
         
@@ -165,10 +167,12 @@ class TerminalRenderer {
                 }
             }
         }
-          // Update screen
+        // Update screen
         this.element.innerHTML = '';
         this.element.appendChild(this.canvas);
-    }startRenderLoop() {
+    }
+
+    startRenderLoop() {
         const loop = () => {
             this.render();
             requestAnimationFrame(loop);
